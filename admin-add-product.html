@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add New Product – Pinay Homeschooler Shop Admin</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    body { background: #f4f6f9; }
+    .admin-layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+    .admin-sidebar {
+      background: #1e1e2e;
+      color: #ccc;
+      padding: 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    .sidebar-logo {
+      padding: 22px 20px;
+      border-bottom: 1px solid #333;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .sidebar-logo span { font-size: 22px; }
+    .sidebar-logo .logo-top { color: #fff; font-size: 14px; }
+    .sidebar-logo .logo-bottom { color: #666; font-size: 9px; }
+    .sidebar-nav { padding: 12px 0; }
+    .sidebar-nav a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 20px;
+      font-size: 13.5px;
+      color: #aaa;
+      transition: background 0.2s, color 0.2s;
+    }
+    .sidebar-nav a:hover, .sidebar-nav a.active {
+      background: #2a2a40;
+      color: #fff;
+    }
+    .sidebar-nav a.active { border-left: 3px solid #e8656b; }
+    .sidebar-nav a i { width: 18px; text-align: center; font-size: 14px; }
+    .sidebar-section {
+      padding: 8px 20px 4px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #666;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+    .admin-main { padding: 32px 36px; }
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+    .admin-header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      color: #1e1e2e;
+    }
+    .admin-header p { color: #888; font-size: 13.5px; margin-top: 2px; }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 24px;
+      align-items: start;
+    }
+    .form-card {
+      background: #fff;
+      border: 1px solid #e0e4ea;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .form-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1e1e2e;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f2f5;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .form-card h3 i { color: #e8656b; }
+    .form-group { margin-bottom: 18px; }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: #444;
+      margin-bottom: 6px;
+    }
+    .form-group label .required { color: #e8656b; margin-left: 2px; }
+    .form-group label .hint {
+      font-weight: 400;
+      color: #999;
+      font-size: 11.5px;
+      margin-left: 6px;
+    }
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #e0e4ea;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #333;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      font-family: 'Lato', sans-serif;
+      outline: none;
+      background: #fff;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: #e8656b;
+      box-shadow: 0 0 0 3px rgba(232,101,107,0.12);
+    }
+    .form-textarea { resize: vertical; min-height: 100px; }
+    .input-prefix-wrap { display: flex; }
+    .input-prefix {
+      padding: 10px 12px;
+      background: #f4f6f9;
+      border: 1.5px solid #e0e4ea;
+      border-right: none;
+      border-radius: 8px 0 0 8px;
+      font-size: 14px;
+      color: #888;
+      font-weight: 700;
+    }
+    .input-prefix-wrap .form-input { border-radius: 0 8px 8px 0; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    .char-count { font-size: 11px; color: #aaa; text-align: right; margin-top: 4px; }
+    .upload-zone {
+      border: 2px dashed #d0d5de;
+      border-radius: 10px;
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      background: #fafbfc;
+    }
+    .upload-zone:hover { border-color: #e8656b; background: #fdf5f5; }
+    .upload-zone i { font-size: 36px; color: #ccc; margin-bottom: 10px; }
+    .upload-zone p { font-size: 13.5px; color: #888; }
+    .upload-zone strong { color: #e8656b; }
+    .emoji-picker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 10px 0;
+    }
+    .emoji-option {
+      width: 52px; height: 52px;
+      border-radius: 10px;
+      border: 2px solid transparent;
+      background: #f4f6f9;
+      font-size: 26px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .emoji-option:hover, .emoji-option.selected {
+      border-color: #e8656b;
+      background: #fdf5f5;
+    }
+    .color-picker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 8px 0;
+    }
+    .color-option {
+      width: 40px; height: 40px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 3px solid transparent;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .color-option:hover, .color-option.selected {
+      border-color: #333;
+      transform: scale(1.1);
+    }
+    .tag-input-wrap { position: relative; }
+    .tags-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 8px 10px;
+      border: 1.5px solid #e0e4ea;
+      border-radius: 8px;
+      min-height: 44px;
+      cursor: text;
+      transition: border-color 0.2s;
+    }
+    .tags-container:focus-within { border-color: #e8656b; }
+    .tag-pill {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: #fde8e8;
+      color: #c0353b;
+      padding: 3px 10px 3px 8px;
+      border-radius: 12px;
+      font-size: 12.5px;
+      font-weight: 700;
+    }
+    .tag-pill button { font-size: 12px; color: #c0353b; background: none; border: none; cursor: pointer; }
+    .tag-inline-input {
+      border: none;
+      outline: none;
+      font-size: 13.5px;
+      background: transparent;
+      min-width: 80px;
+      font-family: 'Lato', sans-serif;
+    }
+    .variant-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      background: #fafbfc;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #eee;
+      margin-bottom: 8px;
+    }
+    .variant-row .form-input { background: #fff; margin: 0; }
+    .btn-add-variant {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #e8656b;
+      font-weight: 700;
+      padding: 8px 0;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-remove-variant {
+      color: #aaa;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 15px;
+      transition: color 0.2s;
+    }
+    .btn-remove-variant:hover { color: #e8656b; }
+    .seo-preview {
+      background: #f9fbff;
+      border: 1px solid #e0e8f5;
+      border-radius: 10px;
+      padding: 14px;
+      margin-top: 12px;
+    }
+    .seo-preview .seo-title { color: #1a0dab; font-size: 16px; font-weight: 400; }
+    .seo-preview .seo-url { color: #006621; font-size: 12.5px; }
+    .seo-preview .seo-desc { color: #545454; font-size: 13px; margin-top: 2px; }
+    .product-preview-card {
+      background: #fff;
+      border: 1px solid #e0e4ea;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .preview-img {
+      width: 100%;
+      aspect-ratio: 1;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 80px;
+      transition: background 0.3s;
+    }
+    .preview-body { padding: 14px; }
+    .preview-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; color: #333; }
+    .preview-price { font-size: 16px; font-weight: 700; color: #e8656b; }
+    .preview-type { font-size: 11px; background: #eef8f2; color: #5ba97e; padding: 2px 8px; border-radius: 10px; display: inline-block; margin-top: 6px; font-weight: 700; }
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      position: sticky;
+      bottom: 0;
+      background: #fff;
+      border-top: 1px solid #e0e4ea;
+      padding: 16px 0 0;
+      margin-top: 10px;
+    }
+    .btn-publish {
+      padding: 13px 32px;
+      background: #e8656b;
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+      border-radius: 28px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .btn-publish:hover { background: #d04a50; }
+    .btn-draft {
+      padding: 13px 24px;
+      background: #fff;
+      color: #444;
+      font-weight: 700;
+      font-size: 14px;
+      border-radius: 28px;
+      border: 2px solid #e0e4ea;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .btn-draft:hover { border-color: #aaa; }
+    .btn-cancel {
+      padding: 13px 20px;
+      background: none;
+      color: #aaa;
+      font-weight: 700;
+      font-size: 14px;
+      border: none;
+      cursor: pointer;
+    }
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .status-draft { background: #f4f6f9; color: #888; }
+    .status-active { background: #e6f9ee; color: #1f7a4d; }
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+    }
+    .toggle-wrap label { font-size: 13.5px; color: #444; font-weight: 700; }
+    .toggle-wrap small { font-size: 12px; color: #999; display: block; }
+    .toggle {
+      position: relative;
+      width: 44px; height: 24px;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: #ccc;
+      border-radius: 24px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 18px; height: 18px;
+      left: 3px; bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+    .toggle input:checked + .toggle-slider { background: #e8656b; }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+    @media (max-width: 900px) {
+      .admin-layout { grid-template-columns: 1fr; }
+      .admin-sidebar { height: auto; position: relative; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-row, .form-row-3 { grid-template-columns: 1fr; }
+      .admin-main { padding: 20px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="admin-layout">
+
+  <!-- Sidebar -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-logo">
+      <span>🌸</span>
+      <div><span class="logo-top" style="font-family:'Playfair Display',serif">Pinay Homeschooler</span><br/><span class="logo-bottom">ADMIN PANEL</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-section">Dashboard</div>
+      <a href="#"><i class="fas fa-tachometer-alt"></i> Overview</a>
+      <a href="#"><i class="fas fa-chart-bar"></i> Analytics</a>
+
+      <div class="sidebar-section">Catalog</div>
+      <a href="#" class="active"><i class="fas fa-box"></i> Products</a>
+      <a href="#"><i class="fas fa-tags"></i> Collections</a>
+      <a href="#"><i class="fas fa-percent"></i> Discounts</a>
+
+      <div class="sidebar-section">Orders</div>
+      <a href="#"><i class="fas fa-shopping-cart"></i> All Orders</a>
+      <a href="#"><i class="fas fa-download"></i> Downloads</a>
+
+      <div class="sidebar-section">Store</div>
+      <a href="#"><i class="fas fa-users"></i> Customers</a>
+      <a href="#"><i class="fas fa-cog"></i> Settings</a>
+      <a href="index.html" target="_blank"><i class="fas fa-external-link-alt"></i> View Store</a>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="admin-main">
+    <div class="admin-header">
+      <div>
+        <h1>Add New Product</h1>
+        <p>Fill in the details below to create a new product listing.</p>
+      </div>
+      <span class="badge-status status-draft"><i class="fas fa-circle" style="font-size:8px"></i> Draft</span>
+    </div>
+
+    <form id="productForm" onsubmit="publishProduct(event)">
+      <div class="form-grid">
+
+        <!-- LEFT COLUMN -->
+        <div>
+
+          <!-- Basic Info -->
+          <div class="form-card">
+            <h3><i class="fas fa-info-circle"></i> Basic Information</h3>
+
+            <div class="form-group">
+              <label>Product Title <span class="required">*</span></label>
+              <input type="text" class="form-input" id="prodTitle" placeholder="e.g. Butterfly Life Cycle Workbook – Printable"
+                oninput="updatePreview(); updateCharCount(this, 'titleCount', 80)" required />
+              <div class="char-count"><span id="titleCount">0</span>/80 characters</div>
+            </div>
+
+            <div class="form-group">
+              <label>Short Description <span class="required">*</span>
+                <span class="hint">Shown in product cards</span>
+              </label>
+              <textarea class="form-textarea" id="prodShortDesc" rows="3"
+                placeholder="A brief, engaging description (max 160 characters)…"
+                oninput="updateCharCount(this, 'shortDescCount', 160)"></textarea>
+              <div class="char-count"><span id="shortDescCount">0</span>/160 characters</div>
+            </div>
+
+            <div class="form-group">
+              <label>Full Description <span class="required">*</span></label>
+              <textarea class="form-textarea" id="prodDesc" rows="6"
+                placeholder="Detailed description: what's included, learning objectives, grade level, how to use…"></textarea>
+            </div>
+          </div>
+
+          <!-- Product Visuals -->
+          <div class="form-card">
+            <h3><i class="fas fa-palette"></i> Product Visuals</h3>
+
+            <div class="form-group">
+              <label>Choose Emoji Icon <span class="required">*</span></label>
+              <div class="emoji-picker" id="emojiPicker">
+                <div class="emoji-option selected" onclick="selectEmoji(this, '🦋')">🦋</div>
+                <div class="emoji-option" onclick="selectEmoji(this, '🐸')">🐸</div>
+                <div class="emoji-option" onclick="selectEmoji(this, '🌱')">🌱</div>
+                <div class="emoji-option" onclick="selectEmoji(this, '🌻')">🌻</div>
+                <div class="emoji-option" onclick="selectEmoji(this, '🐔')">🐔</div>
+                <div class="emoji-option" onclick="selectEmoji(this, '🐝')">🐝</div>
+                <div class="emoji-option" onclick="selectEmoji(this, '🐛')">🐛</div>
+                <div class="emoji-option" onclick="selectEmoji(this, '🐌')">🐌</div>
+                <div class="emoji-option" onclick="selectEmoji(this, '🐠')">🐠</div>
+                <div class="emoji-option" onclick="selectEmoji(this, '🦎')">🦎</div>
+                <div class="emoji-option" onclick="selectEmoji(this, '🐙')">🐙</div>
+                <div class="emoji-option" onclick="selectEmoji(this, '🌸')">🌸</div>
+                <div class="emoji-option" onclick="selectEmoji(this, '📖')">📖</div>
+                <div class="emoji-option" onclick="selectEmoji(this, '✏️')">✏️</div>
+                <div class="emoji-option" onclick="selectEmoji(this, '🎨')">🎨</div>
+                <div class="emoji-option" onclick="selectEmoji(this, '📐')">📐</div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Background Color</label>
+              <div class="color-picker" id="colorPicker">
+                <div class="color-option selected" onclick="selectColor(this, 'linear-gradient(135deg,#d4f1c0,#a8e6a1)')" style="background:linear-gradient(135deg,#d4f1c0,#a8e6a1)" title="Green"></div>
+                <div class="color-option" onclick="selectColor(this, 'linear-gradient(135deg,#c0e8f1,#7ecfe8)')" style="background:linear-gradient(135deg,#c0e8f1,#7ecfe8)" title="Blue"></div>
+                <div class="color-option" onclick="selectColor(this, 'linear-gradient(135deg,#fde8b0,#fbc85a)')" style="background:linear-gradient(135deg,#fde8b0,#fbc85a)" title="Yellow"></div>
+                <div class="color-option" onclick="selectColor(this, 'linear-gradient(135deg,#ffd6d6,#ffaaaa)')" style="background:linear-gradient(135deg,#ffd6d6,#ffaaaa)" title="Pink-Red"></div>
+                <div class="color-option" onclick="selectColor(this, 'linear-gradient(135deg,#f0d4f5,#d89fe8)')" style="background:linear-gradient(135deg,#f0d4f5,#d89fe8)" title="Purple"></div>
+                <div class="color-option" onclick="selectColor(this, 'linear-gradient(135deg,#c8f5e0,#6ddba7)')" style="background:linear-gradient(135deg,#c8f5e0,#6ddba7)" title="Mint"></div>
+                <div class="color-option" onclick="selectColor(this, 'linear-gradient(135deg,#ffe8c8,#f5c07a)')" style="background:linear-gradient(135deg,#ffe8c8,#f5c07a)" title="Orange"></div>
+                <div class="color-option" onclick="selectColor(this, 'linear-gradient(135deg,#dce0ff,#9fa8f5)')" style="background:linear-gradient(135deg,#dce0ff,#9fa8f5)" title="Indigo"></div>
+                <div class="color-option" onclick="selectColor(this, 'linear-gradient(135deg,#ffd6f0,#f59fd4)')" style="background:linear-gradient(135deg,#ffd6f0,#f59fd4)" title="Hot Pink"></div>
+                <div class="color-option" onclick="selectColor(this, 'linear-gradient(135deg,#e0f8c8,#9fd87a)')" style="background:linear-gradient(135deg,#e0f8c8,#9fd87a)" title="Lime"></div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Upload Product Images <span class="hint">Optional – PNG, JPG (max 5MB each)</span></label>
+              <div class="upload-zone" onclick="document.getElementById('imgInput').click()">
+                <input type="file" id="imgInput" accept="image/*" multiple hidden />
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Drag & drop images here, or <strong>click to browse</strong></p>
+                <p style="font-size:11.5px; color:#bbb; margin-top:4px">Recommended: 800×800px, square format</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pricing -->
+          <div class="form-card">
+            <h3><i class="fas fa-peso-sign"></i> Pricing</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Regular Price <span class="required">*</span></label>
+                <div class="input-prefix-wrap">
+                  <span class="input-prefix">₱</span>
+                  <input type="number" class="form-input" id="prodPrice" min="0" step="0.01" placeholder="149.00"
+                    oninput="updatePreview()" required />
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Sale Price <span class="hint">Leave blank if no sale</span></label>
+                <div class="input-prefix-wrap">
+                  <span class="input-prefix">₱</span>
+                  <input type="number" class="form-input" id="prodSalePrice" min="0" step="0.01" placeholder="—"
+                    oninput="updatePreview()" />
+                </div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Cost per Item <span class="hint">Not shown to customers</span></label>
+                <div class="input-prefix-wrap">
+                  <span class="input-prefix">₱</span>
+                  <input type="number" class="form-input" placeholder="—" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Margin</label>
+                <input type="text" class="form-input" value="—" disabled style="background:#f9f9f9; color:#aaa;" />
+              </div>
+            </div>
+            <div class="toggle-wrap">
+              <div>
+                <label>Charge tax on this product</label>
+                <small>12% VAT will be added at checkout</small>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Product Details -->
+          <div class="form-card">
+            <h3><i class="fas fa-list-ul"></i> Product Details</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Product Type <span class="required">*</span></label>
+                <select class="form-select" id="prodType" onchange="updatePreview()" required>
+                  <option value="">Select type…</option>
+                  <option value="printable" selected>Printable (Digital)</option>
+                  <option value="physical">Physical</option>
+                  <option value="bundle">Bundle</option>
+                  <option value="ebook">eBook</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Collection</label>
+                <select class="form-select" id="prodCollection">
+                  <option value="life-cycles" selected>Life Cycles</option>
+                  <option value="worksheets">Worksheets</option>
+                  <option value="flashcards">Flashcards</option>
+                  <option value="science-kits">Science Kits</option>
+                  <option value="math">Math Activities</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row-3">
+              <div class="form-group">
+                <label>Grade Level</label>
+                <select class="form-select">
+                  <option>K–2 (Ages 5–8)</option>
+                  <option selected>K–5 (Ages 5–11)</option>
+                  <option>Grades 3–6 (Ages 8–12)</option>
+                  <option>Grades 6–10</option>
+                  <option>All Ages</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Language</label>
+                <select class="form-select">
+                  <option value="en" selected>English</option>
+                  <option value="fil">Filipino</option>
+                  <option value="both">English + Filipino</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Number of Pages</label>
+                <input type="number" class="form-input" placeholder="e.g. 28" min="1" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>SKU <span class="hint">Auto-generated if blank</span></label>
+              <input type="text" class="form-input" id="prodSKU" placeholder="e.g. PHB-LC-BF-001" />
+            </div>
+          </div>
+
+          <!-- What's Included -->
+          <div class="form-card">
+            <h3><i class="fas fa-clipboard-list"></i> What's Included</h3>
+            <div id="variantRows">
+              <div class="variant-row">
+                <input type="text" class="form-input" placeholder="e.g. Life cycle diagram (color + B&W versions)" />
+                <button type="button" class="btn-remove-variant" onclick="removeVariant(this)"><i class="fas fa-times"></i></button>
+              </div>
+              <div class="variant-row">
+                <input type="text" class="form-input" placeholder="e.g. Sequencing cards (cut, arrange, and paste)" />
+                <button type="button" class="btn-remove-variant" onclick="removeVariant(this)"><i class="fas fa-times"></i></button>
+              </div>
+              <div class="variant-row">
+                <input type="text" class="form-input" placeholder="e.g. Labeling worksheets" />
+                <button type="button" class="btn-remove-variant" onclick="removeVariant(this)"><i class="fas fa-times"></i></button>
+              </div>
+            </div>
+            <button type="button" class="btn-add-variant" onclick="addVariant()">
+              <i class="fas fa-plus"></i> Add Item
+            </button>
+          </div>
+
+          <!-- Tags -->
+          <div class="form-card">
+            <h3><i class="fas fa-tag"></i> Tags</h3>
+            <div class="form-group">
+              <label>Product Tags <span class="hint">Press Enter or comma to add</span></label>
+              <div class="tags-container" id="tagsContainer" onclick="document.getElementById('tagInput').focus()">
+                <span class="tag-pill">life cycle <button onclick="removeTag(this)">×</button></span>
+                <span class="tag-pill">printable <button onclick="removeTag(this)">×</button></span>
+                <span class="tag-pill">science <button onclick="removeTag(this)">×</button></span>
+                <input type="text" class="tag-inline-input" id="tagInput"
+                  placeholder="Add a tag…"
+                  onkeydown="handleTagInput(event)" />
+              </div>
+            </div>
+          </div>
+
+          <!-- SEO -->
+          <div class="form-card">
+            <h3><i class="fas fa-search"></i> SEO & Metadata</h3>
+            <div class="form-group">
+              <label>SEO Title <span class="hint">Defaults to product title</span></label>
+              <input type="text" class="form-input" id="seoTitle" placeholder="Leave blank to use product title"
+                oninput="updateSEOPreview()" />
+              <div class="char-count"><span id="seoTitleCount">0</span>/70 characters (recommended)</div>
+            </div>
+            <div class="form-group">
+              <label>Meta Description</label>
+              <textarea class="form-textarea" id="seoDesc" rows="3"
+                placeholder="Brief description for search engines…"
+                oninput="updateSEOPreview(); updateCharCount(this,'seoDescCount',160)"></textarea>
+              <div class="char-count"><span id="seoDescCount">0</span>/160 characters</div>
+            </div>
+            <div class="form-group">
+              <label>URL Handle</label>
+              <div class="input-prefix-wrap">
+                <span class="input-prefix" style="font-size:12px;white-space:nowrap">/products/</span>
+                <input type="text" class="form-input" id="urlHandle" placeholder="butterfly-life-cycle-workbook-printable" />
+              </div>
+            </div>
+            <div class="seo-preview">
+              <div class="seo-title" id="seoPreviewTitle">Butterfly Life Cycle Workbook – Printable</div>
+              <div class="seo-url" id="seoPreviewUrl">pinayhomeschoolershop.com › products › butterfly-life-cycle-workbook</div>
+              <div class="seo-desc" id="seoPreviewDesc">A beautifully illustrated printable workbook for K–5 learners covering all 4 stages of the butterfly life cycle…</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div>
+
+          <!-- Preview Card -->
+          <div class="form-card" style="position:sticky; top:20px">
+            <h3><i class="fas fa-eye"></i> Live Preview</h3>
+            <div class="product-preview-card">
+              <div class="preview-img" id="previewImg" style="background: linear-gradient(135deg,#d4f1c0,#a8e6a1)">
+                <span id="previewEmoji" style="font-size:80px">🦋</span>
+              </div>
+              <div class="preview-body">
+                <div class="preview-title" id="previewTitle">Product Title</div>
+                <div class="preview-price" id="previewPrice">₱0.00</div>
+                <span class="preview-type" id="previewType">Printable</span>
+              </div>
+            </div>
+
+            <!-- Status -->
+            <div class="form-group">
+              <label>Visibility</label>
+              <select class="form-select" id="prodStatus">
+                <option value="active">Active (visible in shop)</option>
+                <option value="draft" selected>Draft (hidden)</option>
+                <option value="archived">Archived</option>
+              </select>
+            </div>
+
+            <!-- Badge -->
+            <div class="form-group">
+              <label>Product Badge</label>
+              <select class="form-select" id="prodBadge">
+                <option value="">No badge</option>
+                <option value="new">New</option>
+                <option value="bestseller">Best Seller</option>
+                <option value="sale">Sale</option>
+                <option value="featured">Featured</option>
+              </select>
+            </div>
+
+            <!-- Toggles -->
+            <div class="toggle-wrap">
+              <div>
+                <label>Featured Product</label>
+                <small>Show on homepage</small>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="toggle-wrap" style="border-top:1px solid #f0f2f5; padding-top:12px; margin-top:4px">
+              <div>
+                <label>Allow Reviews</label>
+                <small>Customers can leave ratings</small>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="toggle-wrap" style="border-top:1px solid #f0f2f5; padding-top:12px; margin-top:4px">
+              <div>
+                <label>Instant Download</label>
+                <small>Auto-send file after payment</small>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <!-- Actions -->
+            <div class="form-actions">
+              <button type="submit" class="btn-publish">
+                <i class="fas fa-upload"></i> Publish Product
+              </button>
+              <button type="button" class="btn-draft" onclick="saveDraft()">
+                Save Draft
+              </button>
+              <button type="button" class="btn-cancel" onclick="if(confirm('Discard changes?')) window.history.back()">
+                Cancel
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </form>
+  </main>
+</div>
+
+<!-- Success Modal -->
+<div id="successModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:3000; align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:16px; padding:40px; text-align:center; max-width:420px; margin:20px; box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+    <div style="font-size:60px; margin-bottom:16px">🎉</div>
+    <h2 style="font-family:'Playfair Display',serif; font-size:24px; margin-bottom:10px">Product Published!</h2>
+    <p style="color:#888; font-size:14.5px; line-height:1.6; margin-bottom:24px">Your product has been published successfully and is now visible in your shop.</p>
+    <div style="display:flex; gap:12px; justify-content:center">
+      <a href="index.html" style="padding:12px 24px; background:#e8656b; color:#fff; border-radius:24px; font-weight:700; font-size:14px">View Shop</a>
+      <button onclick="resetForm()" style="padding:12px 24px; background:#f4f6f9; color:#444; border-radius:24px; font-weight:700; font-size:14px; border:none; cursor:pointer">Add Another</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let selectedEmoji = '🦋';
+let selectedColor = 'linear-gradient(135deg,#d4f1c0,#a8e6a1)';
+
+function selectEmoji(el, emoji) {
+  document.querySelectorAll('.emoji-option').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedEmoji = emoji;
+  document.getElementById('previewEmoji').textContent = emoji;
+}
+
+function selectColor(el, color) {
+  document.querySelectorAll('.color-option').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedColor = color;
+  document.getElementById('previewImg').style.background = color;
+}
+
+function updatePreview() {
+  const title = document.getElementById('prodTitle').value || 'Product Title';
+  const price = document.getElementById('prodPrice').value;
+  const salePrice = document.getElementById('prodSalePrice').value;
+  const type = document.getElementById('prodType').value;
+
+  document.getElementById('previewTitle').textContent = title;
+
+  if (price) {
+    if (salePrice && +salePrice < +price) {
+      document.getElementById('previewPrice').innerHTML =
+        `<span style="text-decoration:line-through;color:#aaa;font-size:13px;font-weight:400">₱${(+price).toLocaleString()}.00</span> <span style="color:#e8656b">₱${(+salePrice).toLocaleString()}.00</span>`;
+    } else {
+      document.getElementById('previewPrice').textContent = `₱${(+price).toLocaleString()}.00`;
+    }
+  }
+
+  const typeLabels = { printable: 'Printable', physical: 'Physical', bundle: 'Bundle', ebook: 'eBook' };
+  document.getElementById('previewType').textContent = typeLabels[type] || 'Printable';
+
+  // Auto-generate URL handle
+  const handle = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  if (!document.getElementById('urlHandle').value) {
+    document.getElementById('urlHandle').placeholder = handle || 'product-url-handle';
+  }
+
+  updateSEOPreview();
+}
+
+function updateSEOPreview() {
+  const title = document.getElementById('seoTitle').value || document.getElementById('prodTitle').value || 'Product Title';
+  const desc = document.getElementById('seoDesc').value || 'A beautifully illustrated resource for your homeschool…';
+  const handle = document.getElementById('urlHandle').value || 'product-url-handle';
+
+  document.getElementById('seoPreviewTitle').textContent = title + ' – Pinay Homeschooler Shop';
+  document.getElementById('seoPreviewUrl').textContent = 'pinayhomeschoolershop.com › products › ' + (handle || 'product');
+  document.getElementById('seoPreviewDesc').textContent = desc;
+
+  const titleEl = document.getElementById('seoTitle');
+  document.getElementById('seoTitleCount').textContent = titleEl.value.length;
+}
+
+function updateCharCount(el, countId, max) {
+  const count = el.value.length;
+  const span = document.getElementById(countId);
+  if (span) {
+    span.textContent = count;
+    span.style.color = count > max * 0.9 ? '#e8656b' : '#aaa';
+  }
+}
+
+function handleTagInput(e) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    const val = e.target.value.trim().replace(',', '');
+    if (val) addTag(val);
+    e.target.value = '';
+  }
+}
+
+function addTag(text) {
+  const container = document.getElementById('tagsContainer');
+  const input = document.getElementById('tagInput');
+  const pill = document.createElement('span');
+  pill.className = 'tag-pill';
+  pill.innerHTML = `${text} <button onclick="removeTag(this)">×</button>`;
+  container.insertBefore(pill, input);
+}
+
+function removeTag(btn) {
+  btn.parentElement.remove();
+}
+
+function addVariant() {
+  const container = document.getElementById('variantRows');
+  const row = document.createElement('div');
+  row.className = 'variant-row';
+  row.innerHTML = `<input type="text" class="form-input" placeholder="What's included item…" /><button type="button" class="btn-remove-variant" onclick="removeVariant(this)"><i class="fas fa-times"></i></button>`;
+  container.appendChild(row);
+  row.querySelector('input').focus();
+}
+
+function removeVariant(btn) {
+  btn.parentElement.remove();
+}
+
+function publishProduct(e) {
+  e.preventDefault();
+  const modal = document.getElementById('successModal');
+  modal.style.display = 'flex';
+}
+
+function saveDraft() {
+  alert('Product saved as draft. You can come back to edit it anytime.');
+}
+
+function resetForm() {
+  document.getElementById('successModal').style.display = 'none';
+  document.getElementById('productForm').reset();
+  document.getElementById('previewTitle').textContent = 'Product Title';
+  document.getElementById('previewPrice').textContent = '₱0.00';
+  document.getElementById('previewType').textContent = 'Printable';
+  document.getElementById('previewEmoji').textContent = '🦋';
+  document.getElementById('previewImg').style.background = 'linear-gradient(135deg,#d4f1c0,#a8e6a1)';
+}
+
+// Init
+updatePreview();
+</script>
+</body>
+</html>

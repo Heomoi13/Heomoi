@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pinay Homeschooler Shop – Life Cycles Collection</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+
+  <!-- Announcement Bar -->
+  <div class="announcement-bar">
+    <p>🌿 Free shipping on orders over ₱999 | Printable downloads available instantly!</p>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="container header-inner">
+      <!-- Mobile Menu Toggle -->
+      <button class="nav-toggle" id="navToggle" aria-label="Open menu">
+        <span></span><span></span><span></span>
+      </button>
+
+      <!-- Logo -->
+      <a href="index.html" class="logo">
+        <span class="logo-icon">🌸</span>
+        <div>
+          <span class="logo-top">Pinay Homeschooler</span>
+          <span class="logo-bottom">S H O P</span>
+        </div>
+      </a>
+
+      <!-- Desktop Nav -->
+      <nav class="nav-desktop">
+        <a href="index.html">Home</a>
+        <div class="nav-dropdown">
+          <a href="#">Shop <i class="fas fa-chevron-down fa-xs"></i></a>
+          <div class="dropdown-menu">
+            <a href="index.html">Life Cycles</a>
+            <a href="#">Worksheets</a>
+            <a href="#">Flashcards</a>
+            <a href="#">Science Kits</a>
+            <a href="#">Math Activities</a>
+          </div>
+        </div>
+        <a href="about.html">About</a>
+        <a href="#">Blog</a>
+        <a href="#">Contact</a>
+      </nav>
+
+      <!-- Header Actions -->
+      <div class="header-actions">
+        <button class="icon-btn" id="searchToggle" aria-label="Search">
+          <i class="fas fa-search"></i>
+        </button>
+        <a href="#" class="icon-btn" aria-label="Wishlist">
+          <i class="far fa-heart"></i>
+        </a>
+        <a href="cart.html" class="icon-btn cart-btn" aria-label="Cart">
+          <i class="fas fa-shopping-bag"></i>
+          <span class="cart-count" id="cartCount">0</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-bar" id="searchBar">
+      <div class="container search-inner">
+        <input type="text" placeholder="Search products…" class="search-input" />
+        <button class="search-submit"><i class="fas fa-search"></i></button>
+        <button class="search-close" id="searchClose"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+
+    <!-- Mobile Nav -->
+    <nav class="nav-mobile" id="mobileNav">
+      <a href="index.html">Home</a>
+      <a href="#">Shop All</a>
+      <a href="#">Life Cycles</a>
+      <a href="#">Worksheets</a>
+      <a href="#">Flashcards</a>
+      <a href="about.html">About</a>
+      <a href="#">Blog</a>
+      <a href="#">Contact</a>
+    </nav>
+  </header>
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <div class="container">
+      <a href="index.html">Home</a>
+      <span>/</span>
+      <span>Collections</span>
+      <span>/</span>
+      <span>Life Cycles</span>
+    </div>
+  </div>
+
+  <!-- Collection Hero -->
+  <section class="collection-hero">
+    <div class="container">
+      <div class="collection-hero-inner">
+        <div class="collection-hero-text">
+          <h1>Life Cycles Collection</h1>
+          <p>Explore our beautifully illustrated life cycle resources — printable worksheets, activity books, and hands-on materials to bring science to life in your homeschool!</p>
+        </div>
+        <div class="collection-hero-badges">
+          <span class="badge badge-green">🦋 Butterfly</span>
+          <span class="badge badge-blue">🐸 Frog</span>
+          <span class="badge badge-yellow">🌱 Plant</span>
+          <span class="badge badge-orange">🐔 Chicken</span>
+          <span class="badge badge-pink">🐝 Bee</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Collection Toolbar -->
+  <section class="collection-toolbar">
+    <div class="container toolbar-inner">
+      <p class="product-count" id="productCount">24 products</p>
+      <div class="toolbar-right">
+        <div class="filter-group">
+          <label>Filter:</label>
+          <select id="filterSelect" onchange="filterProducts()">
+            <option value="all">All Products</option>
+            <option value="printable">Printable</option>
+            <option value="physical">Physical</option>
+            <option value="bundle">Bundle</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Sort by:</label>
+          <select id="sortSelect" onchange="sortProducts()">
+            <option value="featured">Featured</option>
+            <option value="price-asc">Price: Low → High</option>
+            <option value="price-desc">Price: High → Low</option>
+            <option value="newest">Newest</option>
+            <option value="best-selling">Best Selling</option>
+          </select>
+        </div>
+        <div class="view-toggle">
+          <button class="view-btn active" id="gridViewBtn" onclick="setView('grid')" title="Grid view">
+            <i class="fas fa-th"></i>
+          </button>
+          <button class="view-btn" id="listViewBtn" onclick="setView('list')" title="List view">
+            <i class="fas fa-list"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Products Grid -->
+  <main class="collection-main">
+    <div class="container">
+      <div class="products-grid" id="productsGrid">
+
+        <!-- Product Card 1 -->
+        <div class="product-card" data-type="printable" data-price="149" data-date="2024-01" data-sales="120">
+          <div class="product-img-wrap">
+            <div class="product-img" style="background: linear-gradient(135deg,#d4f1c0,#a8e6a1);">
+              <span class="product-emoji">🦋</span>
+            </div>
+            <span class="product-badge badge-new">New</span>
+            <div class="product-overlay">
+              <button class="btn-quick-add" onclick="addToCart('Butterfly Life Cycle Workbook', 149)">
+                <i class="fas fa-shopping-bag"></i> Quick Add
+              </button>
+              <a href="product.html?id=1" class="btn-view-product">View Product</a>
+            </div>
+          </div>
+          <div class="product-info">
+            <p class="product-vendor">Pinay Homeschooler</p>
+            <h3 class="product-title"><a href="product.html?id=1">Butterfly Life Cycle Workbook – Printable</a></h3>
+            <div class="product-stars">
+              <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+              <span>(38)</span>
+            </div>
+            <div class="product-price">
+              <span class="price">₱149.00</span>
+            </div>
+            <span class="product-type-tag">Printable</span>
+          </div>
+        </div>
+
+        <!-- Product Card 2 -->
+        <div class="product-card" data-type="printable" data-price="199" data-date="2024-02" data-sales="95">
+          <div class="product-img-wrap">
+            <div class="product-img" style="background: linear-gradient(135deg,#c0e8f1,#7ecfe8);">
+              <span class="product-emoji">🐸</span>
+            </div>
+            <span class="product-badge badge-bestseller">Best Seller</span>
+            <div class="product-overlay">
+              <button class="btn-quick-add" onclick="addToCart('Frog Life Cycle Activity Pack', 199)">
+                <i class="fas fa-shopping-bag"></i> Quick Add
+              </button>
+              <a href="product.html?id=2" class="btn-view-product">View Product</a>
+            </div>
+          </div>
+          <div class="product-info">
+            <p class="product-vendor">Pinay Homeschooler</p>
+            <h3 class="product-title"><a href="product.html?id=2">Frog Life Cycle Activity Pack – Printable</a></h3>
+            <div class="product-stars">
+              <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+              <span>(52)</span>
+            </div>
+            <div class="product-price">
+              <span class="price">₱199.00</span>
+            </div>
+            <span class="product-type-tag">Printable</span>
+          </div>
+        </div>
+
+        <!-- Product Card 3 -->
+        <div class="product-card" data-type="bundle" data-price="349" data-date="2023-12" data-sales="200">
+          <div class="product-img-wrap">
+            <div class="product-img" style="background: linear-gradient(135deg,#fde8b0,#fbc85a);">
+              <span class="product-emoji">🌻</span>
+            </div>
+            <span class="product-badge badge-sale">SALE</span>
+            <div class="product-overlay">
+              <button class="btn-quick-add" onclick="addToCart('Plant Life Cycle Bundle', 349)">
+                <i class="fas fa-shopping-bag"></i> Quick Add
+              </button>
+              <a href="product.html?id=3" class="btn-view-product">View Product</a>
+            </div>
+          </div>
+          <div class="product-info">
+            <p class="product-vendor">Pinay Homeschooler</p>
+            <h3 class="product-title"><a href="product.html?id=3">Plant Life Cycle Complete Bundle</a></h3>
+            <div class="product-stars">
+              <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+              <span>(76)</span>
+            </div>
+            <div class="product-price">
+              <span class="price-original">₱499.00</span>
+              <span class="price">₱349.00</span>
+            </div>
+            <span class="product-type-tag tag-bundle">Bundle</span>
+          </div>
+        </div>
+
+        <!-- Product Card 4 -->
+        <div class="product-card" data-type="physical" data-price="450" data-date="2024-01" data-sales="60">
+          <div class="product-img-wrap">
+            <div class="product-img" style="background: linear-gradient(135deg,#ffd6d6,#ffaaaa);">
+              <span class="product-emoji">🐔</span>
+            </div>
+            <div class="product-overlay">
+              <button class="btn-quick-add" onclick="addToCart('Chicken & Egg Life Cycle Kit', 450)">
+                <i class="fas fa-shopping-bag"></i> Quick Add
+              </button>
+              <a href="product.html?id=4" class="btn-view-product">View Product</a>
+            </div>
+          </div>
+          <div class="product-info">
+            <p class="product-vendor">Pinay Homeschooler</p>
+            <h3 class="product-title"><a href="product.html?id=4">Chicken & Egg Life Cycle Hands-On Kit</a></h3>
+            <div class="product-stars">
+              <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i>
+              <span>(24)</span>
+            </div>
+            <div class="product-price">
+              <span class="price">₱450.00</span>
+            </div>
+            <span class="product-type-tag tag-physical">Physical</span>
+          </div>
+        </div>
+
+        <!-- Product Card 5 -->
+        <div class="product-card" data-type="printable" data-price="179" data-date="2024-03" data-sales="88">
+          <div class="product-img-wrap">
+            <div class="product-img" style="background: linear-gradient(135deg,#f0d4f5,#d89fe8);">
+              <span class="product-emoji">🐝</span>
+            </div>
+            <span class="product-badge badge-new">New</span>
+            <div class="product-overlay">
+              <button class="btn-quick-add" onclick="addToCart('Bee Life Cycle Worksheets', 179)">
+                <i class="fas fa-shopping-bag"></i> Quick Add
+              </button>
+              <a href="product.html?id=5" class="btn-view-product">View Product</a>
+            </div>
+          </div>
+          <div class="product-info">
+            <p class="product-vendor">Pinay Homeschooler</p>
+            <h3 class="product-title"><a href="product.html?id=5">Bee Life Cycle Worksheets – Printable</a></h3>
+            <div class="product-stars">
+              <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+              <span>(18)</span>
+            </div>
+            <div class="product-price">
+              <span class="price">₱179.00</span>
+            </div>
+            <span class="product-type-tag">Printable</span>
+          </div>
+        </div>
+
+        <!-- Product Card 6 -->
+        <div class="product-card" data-type="bundle" data-price="599" data-date="2023-11" data-sales="150">
+          <div class="product-img-wrap">
+            <div class="product-img" style="background: linear-gradient(135deg,#c8f5e0,#6ddba7);">
+              <span class="product-emoji">🌿</span>
+            </div>
+            <span class="product-badge badge-bestseller">Best Seller</span>
+            <div class="product-overlay">
+              <button class="btn-quick-add" onclick="addToCart('Ultimate Life Cycles Mega Bundle', 599)">
+                <i class="fas fa-shopping-bag"></i> Quick Add
+              </button>
+              <a href="product.html?id=6" class="btn-view-product">View Product</a>
+            </div>
+          </div>
+          <div class="product-info">
+            <p class="product-vendor">Pinay Homeschooler</p>
+            <h3 class="product-title"><a href="product.html?id=6">Ultimate Life Cycles Mega Bundle (6-in-1)</a></h3>
+            <div class="product-stars">
+              <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+              <span>(103)</span>
+            </div>
+            <div class="product-price">
+              <span class="price-original">₱899.00</span>
+              <span class="price">₱599.00</span>
+            </div>
+            <span class="product-type-tag tag-bundle">Bundle</span>
+          </div>
+        </div>
+
+        <!-- Product Card 7 -->
+        <div class="product-card" data-type="printable" data-price="159" data-date="2024-02" data-sales="70">
+          <div class="product-img-wrap">
+            <div class="product-img" style="background: linear-gradient(135deg,#d0e8ff,#8bbce8);">
+              <span class="product-emoji">🦟</span>
+            </div>
+            <div class="product-overlay">
+              <button class="btn-quick-add" onclick="addToCart('Mosquito Life Cycle Worksheets', 159)">
+                <i class="fas fa-shopping-bag"></i> Quick Add
+              </button>
+              <a href="product.html?id=7" class="btn-view-product">View Product</a>
+            </div>
+          </div>
+          <div class="product-info">
+            <p class="product-vendor">Pinay Homeschooler</p>
+            <h3 class="product-title"><a href="product.html?id=7">Mosquito Life Cycle Worksheets – Printable</a></h3>
+            <div class="product-stars">
+              <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i>
+              <span>(14)</span>
+            </div>
+            <div class="product-price">
+              <span class="price">₱159.00</span>
+            </div>
+            <span class="product-type-tag">Printable</span>
+          </div>
+        </div>
+
+        <!-- Product Card 8 -->
+        <div class="product-card" data-type="physical" data-price="680" data-date="2023-10" data-sales="45">
+          <div class="product-img-wrap">
+            <div class="product-img" style="background: linear-gradient(135deg,#ffe8c8,#f5c07a);">
+              <span class="product-emoji">🐛</span>
+            </div>
+            <div class="product-overlay">
+              <button class="btn-quick-add" onclick="addToCart('Caterpillar to Butterfly 3D Kit', 680)">
+                <i class="fas fa-shopping-bag"></i> Quick Add
+              </button>
+              <a href="product.html?id=8" class="btn-view-product">View Product</a>
+            </div>
+          </div>
+          <div class="product-info">
+            <p class="product-vendor">Pinay Homeschooler</p>
+            <h3 class="product-title"><a href="product.html?id=8">Caterpillar to Butterfly 3D Craft Kit</a></h3>
+            <div class="product-stars">
+              <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+              <span>(31)</span>
+            </div>
+            <div class="product-price">
+              <span class="price">₱680.00</span>
+            </div>
+            <span class="product-type-tag tag-physical">Physical</span>
+          </div>
+        </div>
+
+        <!-- Product Card 9 -->
+        <div class="product-card" data-type="printable" data-price="129" data-date="2024-03" data-sales="55">
+          <div class="product-img-wrap">
+            <div class="product-img" style="background: linear-gradient(135deg,#e8f5d0,#b5dc7a);">
+              <span class="product-emoji">🌱</span>
+            </div>
+            <span class="product-badge badge-new">New</span>
+            <div class="product-overlay">
+              <button class="btn-quick-add" onclick="addToCart('Seed Germination Observation Journal', 129)">
+                <i class="fas fa-shopping-bag"></i> Quick Add
+              </button>
+              <a href="product.html?id=9" class="btn-view-product">View Product</a>
+            </div>
+          </div>
+          <div class="product-info">
+            <p class="product-vendor">Pinay Homeschooler</p>
+            <h3 class="product-title"><a href="product.html?id=9">Seed Germination Observation Journal</a></h3>
+            <div class="product-stars">
+              <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+              <span>(22)</span>
+            </div>
+            <div class="product-price">
+              <span class="price">₱129.00</span>
+            </div>
+            <span class="product-type-tag">Printable</span>
+          </div>
+        </div>
+
+        <!-- Product Card 10 -->
+        <div class="product-card" data-type="printable" data-price="169" data-date="2024-01" data-sales="67">
+          <div class="product-img-wrap">
+            <div class="product-img" style="background: linear-gradient(135deg,#ffd6f0,#f59fd4);">
+              <span class="product-emoji">🐠</span>
+            </div>
+            <div class="product-overlay">
+              <button class="btn-quick-add" onclick="addToCart('Fish Life Cycle Worksheets', 169)">
+                <i class="fas fa-shopping-bag"></i> Quick Add
+              </button>
+              <a href="product.html?id=10" class="btn-view-product">View Product</a>
+            </div>
+          </div>
+          <div class="product-info">
+            <p class="product-vendor">Pinay Homeschooler</p>
+            <h3 class="product-title"><a href="product.html?id=10">Fish Life Cycle Worksheets – Printable</a></h3>
+            <div class="product-stars">
+              <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i>
+              <span>(19)</span>
+            </div>
+            <div class="product-price">
+              <span class="price">₱169.00</span>
+            </div>
+            <span class="product-type-tag">Printable</span>
+          </div>
+        </div>
+
+        <!-- Product Card 11 -->
+        <div class="product-card" data-type="bundle" data-price="449" data-date="2023-09" data-sales="180">
+          <div class="product-img-wrap">
+            <div class="product-img" style="background: linear-gradient(135deg,#dce0ff,#9fa8f5);">
+              <span class="product-emoji">🦎</span>
+            </div>
+            <span class="product-badge badge-sale">SALE</span>
+            <div class="product-overlay">
+              <button class="btn-quick-add" onclick="addToCart('Reptiles Life Cycle Bundle', 449)">
+                <i class="fas fa-shopping-bag"></i> Quick Add
+              </button>
+              <a href="product.html?id=11" class="btn-view-product">View Product</a>
+            </div>
+          </div>
+          <div class="product-info">
+            <p class="product-vendor">Pinay Homeschooler</p>
+            <h3 class="product-title"><a href="product.html?id=11">Reptiles & Amphibians Life Cycle Bundle</a></h3>
+            <div class="product-stars">
+              <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+              <span>(41)</span>
+            </div>
+            <div class="product-price">
+              <span class="price-original">₱650.00</span>
+              <span class="price">₱449.00</span>
+            </div>
+            <span class="product-type-tag tag-bundle">Bundle</span>
+          </div>
+        </div>
+
+        <!-- Product Card 12 -->
+        <div class="product-card" data-type="physical" data-price="520" data-date="2024-02" data-sales="38">
+          <div class="product-img-wrap">
+            <div class="product-img" style="background: linear-gradient(135deg,#e0f8c8,#9fd87a);">
+              <span class="product-emoji">🐌</span>
+            </div>
+            <div class="product-overlay">
+              <button class="btn-quick-add" onclick="addToCart('Garden Snail Life Cycle Kit', 520)">
+                <i class="fas fa-shopping-bag"></i> Quick Add
+              </button>
+              <a href="product.html?id=12" class="btn-view-product">View Product</a>
+            </div>
+          </div>
+          <div class="product-info">
+            <p class="product-vendor">Pinay Homeschooler</p>
+            <h3 class="product-title"><a href="product.html?id=12">Garden Snail Life Cycle Activity Kit</a></h3>
+            <div class="product-stars">
+              <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i>
+              <span>(12)</span>
+            </div>
+            <div class="product-price">
+              <span class="price">₱520.00</span>
+            </div>
+            <span class="product-type-tag tag-physical">Physical</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Load More -->
+      <div class="load-more-wrap">
+        <button class="btn-load-more" onclick="loadMore()">Load More Products</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Features Section -->
+  <section class="features-section">
+    <div class="container features-grid">
+      <div class="feature-item">
+        <i class="fas fa-download feature-icon"></i>
+        <h4>Instant Downloads</h4>
+        <p>Get your printables immediately after purchase — no waiting!</p>
+      </div>
+      <div class="feature-item">
+        <i class="fas fa-print feature-icon"></i>
+        <h4>Print at Home</h4>
+        <p>Print as many times as you need for your homeschool family.</p>
+      </div>
+      <div class="feature-item">
+        <i class="fas fa-star feature-icon"></i>
+        <h4>Curriculum-Aligned</h4>
+        <p>Designed to complement K–12 science curricula in the Philippines.</p>
+      </div>
+      <div class="feature-item">
+        <i class="fas fa-heart feature-icon"></i>
+        <h4>Made with Love</h4>
+        <p>Created by a Filipino homeschooling mom, for homeschooling families.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Newsletter -->
+  <section class="newsletter-section">
+    <div class="container newsletter-inner">
+      <div class="newsletter-text">
+        <h2>Join Our Homeschool Community!</h2>
+        <p>Get free printables, activity ideas, and exclusive discounts delivered to your inbox. 🌸</p>
+      </div>
+      <form class="newsletter-form" onsubmit="subscribeNewsletter(event)">
+        <input type="email" placeholder="Enter your email address…" required />
+        <button type="submit">Subscribe</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div class="footer-col footer-about">
+        <div class="footer-logo">
+          <span>🌸</span>
+          <div>
+            <span class="logo-top">Pinay Homeschooler</span>
+            <span class="logo-bottom">S H O P</span>
+          </div>
+        </div>
+        <p>Your one-stop shop for beautiful, affordable, and effective homeschool materials made for Filipino families.</p>
+        <div class="footer-social">
+          <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" aria-label="Pinterest"><i class="fab fa-pinterest-p"></i></a>
+          <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Quick Links</h4>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="#">Shop All</a></li>
+          <li><a href="#">Life Cycles</a></li>
+          <li><a href="#">Worksheets</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="#">Blog</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Customer Care</h4>
+        <ul>
+          <li><a href="#">FAQ</a></li>
+          <li><a href="#">Shipping Policy</a></li>
+          <li><a href="#">Refund Policy</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Service</a></li>
+          <li><a href="#">Contact Us</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <ul class="contact-list">
+          <li><i class="fas fa-envelope"></i> hello@pinayhomeschoolershop.com</li>
+          <li><i class="fab fa-facebook-messenger"></i> Message us on Facebook</li>
+          <li><i class="fas fa-clock"></i> Mon–Fri, 9am–6pm PHT</li>
+        </ul>
+        <h4 style="margin-top:1.2rem">We Accept</h4>
+        <div class="payment-icons">
+          <span title="GCash">GCash</span>
+          <span title="Maya">Maya</span>
+          <span title="PayPal">PayPal</span>
+          <span title="Card">Visa/MC</span>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container">
+        <p>© 2024 Pinay Homeschooler Shop. All rights reserved. Made with ❤️ in the Philippines.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Cart Toast -->
+  <div class="cart-toast" id="cartToast">
+    <i class="fas fa-check-circle"></i>
+    <span id="cartToastMsg">Item added to cart!</span>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your Cart – Pinay Homeschooler Shop</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+
+  <div class="announcement-bar">
+    <p>🌿 Free shipping on orders over ₱999 | Printable downloads available instantly!</p>
+  </div>
+
+  <header class="header">
+    <div class="container header-inner">
+      <button class="nav-toggle" id="navToggle"><span></span><span></span><span></span></button>
+      <a href="index.html" class="logo">
+        <span class="logo-icon">🌸</span>
+        <div><span class="logo-top">Pinay Homeschooler</span><span class="logo-bottom">S H O P</span></div>
+      </a>
+      <nav class="nav-desktop">
+        <a href="index.html">Home</a>
+        <div class="nav-dropdown">
+          <a href="#">Shop <i class="fas fa-chevron-down fa-xs"></i></a>
+          <div class="dropdown-menu">
+            <a href="index.html">Life Cycles</a>
+            <a href="#">Worksheets</a>
+            <a href="#">Flashcards</a>
+          </div>
+        </div>
+        <a href="about.html">About</a>
+        <a href="#">Contact</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn" id="searchToggle"><i class="fas fa-search"></i></button>
+        <a href="#" class="icon-btn"><i class="far fa-heart"></i></a>
+        <a href="cart.html" class="icon-btn cart-btn">
+          <i class="fas fa-shopping-bag"></i>
+          <span class="cart-count" id="cartCount">0</span>
+        </a>
+      </div>
+    </div>
+    <nav class="nav-mobile" id="mobileNav">
+      <a href="index.html">Home</a>
+      <a href="#">Shop All</a>
+      <a href="index.html">Life Cycles</a>
+      <a href="about.html">About</a>
+    </nav>
+  </header>
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <div class="container">
+      <a href="index.html">Home</a><span>/</span>
+      <span>Cart</span>
+    </div>
+  </div>
+
+  <!-- Cart -->
+  <main class="cart-page">
+    <div class="container">
+      <h1>Your Shopping Cart</h1>
+      <div class="cart-layout">
+        <div class="cart-items" id="cartItems">
+          <!-- Rendered by JS -->
+        </div>
+        <div class="cart-summary">
+          <h3>Order Summary</h3>
+          <div class="summary-row">
+            <span>Subtotal</span>
+            <span id="summarySubtotal">₱0.00</span>
+          </div>
+          <div class="summary-row">
+            <span>Shipping</span>
+            <span id="summaryShipping">₱80.00</span>
+          </div>
+          <div class="summary-row">
+            <span>Discount</span>
+            <span>—</span>
+          </div>
+          <div class="summary-row total">
+            <span>Total</span>
+            <span id="summaryTotal">₱0.00</span>
+          </div>
+          <button class="checkout-btn">
+            <i class="fas fa-lock"></i> Proceed to Checkout
+          </button>
+          <p style="text-align:center; font-size:12px; color:var(--text-light); margin-top:12px;">
+            <i class="fas fa-shield-alt"></i> Secure checkout · GCash · Maya · PayPal · Card
+          </p>
+          <div style="margin-top:16px; text-align:center;">
+            <a href="index.html" style="font-size:13px; color:var(--primary); font-weight:700; text-decoration:underline;">
+              ← Continue Shopping
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div class="footer-col footer-about">
+        <div class="footer-logo">
+          <span>🌸</span>
+          <div><span class="logo-top">Pinay Homeschooler</span><span class="logo-bottom">S H O P</span></div>
+        </div>
+        <p>Your one-stop shop for beautiful, affordable, and effective homeschool materials made for Filipino families.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Quick Links</h4>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="index.html">Life Cycles</a></li>
+          <li><a href="about.html">About</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Customer Care</h4>
+        <ul>
+          <li><a href="#">FAQ</a></li>
+          <li><a href="#">Refund Policy</a></li>
+          <li><a href="#">Contact Us</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <ul class="contact-list">
+          <li><i class="fas fa-envelope"></i> hello@pinayhomeschoolershop.com</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container">
+        <p>© 2024 Pinay Homeschooler Shop. All rights reserved. Made with ❤️ in the Philippines.</p>
+      </div>
+    </div>
+  </footer>
+
+  <div class="cart-toast" id="cartToast">
+    <i class="fas fa-check-circle"></i>
+    <span id="cartToastMsg">Item added to cart!</span>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

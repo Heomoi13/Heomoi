@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product Generator – Pinay Homeschooler Shop</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #e8656b;
+      --primary-dark: #d04a50;
+      --primary-light: #fdf0f0;
+      --accent: #5ba97e;
+      --accent-light: #eef8f2;
+      --purple: #7c5cbf;
+      --purple-light: #f0ecff;
+      --border: #e0e4ea;
+      --text: #1e1e2e;
+      --muted: #888;
+      --bg: #f4f6f9;
+      --card: #fff;
+      --radius: 12px;
+      --shadow: 0 2px 16px rgba(0,0,0,0.08);
+      --shadow-lg: 0 8px 40px rgba(0,0,0,0.14);
+    }
+    body { font-family: 'Lato', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    a { text-decoration: none; color: inherit; }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      background: #1e1e2e;
+      color: #fff;
+      padding: 0 28px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .topbar-logo { display: flex; align-items: center; gap: 10px; font-family: 'Playfair Display', serif; font-size: 15px; }
+    .topbar-logo span { font-size: 20px; }
+    .topbar-nav { display: flex; gap: 6px; }
+    .topbar-nav a {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      color: #aaa;
+      transition: background .2s, color .2s;
+    }
+    .topbar-nav a:hover { background: #2a2a40; color: #fff; }
+    .topbar-nav a.active { background: var(--primary); color: #fff; }
+
+    /* ── MAIN LAYOUT ── */
+    .main { max-width: 1280px; margin: 0 auto; padding: 32px 24px 80px; }
+    .page-header { margin-bottom: 28px; }
+    .page-header h1 { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--text); display: flex; align-items: center; gap: 10px; }
+    .page-header p { color: var(--muted); font-size: 14px; margin-top: 5px; }
+    .page-layout { display: grid; grid-template-columns: 1fr 380px; gap: 24px; align-items: start; }
+
+    /* ── GENERATOR PANEL ── */
+    .gen-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+    .gen-panel-header {
+      background: linear-gradient(135deg, #1e1e2e, #2e2e4e);
+      padding: 20px 24px;
+      color: #fff;
+    }
+    .gen-panel-header h2 { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .gen-panel-header p { font-size: 13px; color: #aaa; margin-top: 4px; }
+
+    /* STEP 1: Keyword Input */
+    .step-section { padding: 24px; border-bottom: 1px solid var(--border); }
+    .step-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 14px;
+    }
+    .step-num {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .keyword-input-wrap { position: relative; }
+    .keyword-input {
+      width: 100%;
+      padding: 14px 52px 14px 18px;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      font-size: 16px;
+      font-family: 'Lato', sans-serif;
+      color: var(--text);
+      transition: border-color .2s, box-shadow .2s;
+      outline: none;
+      background: #fafbfc;
+    }
+    .keyword-input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(232,101,107,.1); background: #fff; }
+    .keyword-clear {
+      position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+      color: #ccc; font-size: 16px; cursor: pointer; background: none; border: none;
+      transition: color .2s;
+    }
+    .keyword-clear:hover { color: var(--primary); }
+    .keyword-suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .kw-chip {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1.5px solid var(--border);
+      font-size: 12.5px;
+      color: #555;
+      cursor: pointer;
+      transition: all .2s;
+      background: #fff;
+    }
+    .kw-chip:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+
+    /* STEP 2: Options */
+    .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .option-group label { display: block; font-size: 12.5px; font-weight: 700; color: #555; margin-bottom: 5px; }
+    .option-select, .option-input {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-family: 'Lato', sans-serif;
+      color: var(--text);
+      background: #fafbfc;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .option-select:focus, .option-input:focus { border-color: var(--primary); }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+    .check-chip {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 12.5px;
+      cursor: pointer;
+      transition: all .2s;
+      background: #fff;
+      user-select: none;
+    }
+    .check-chip input { accent-color: var(--primary); }
+    .check-chip:has(input:checked) { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 700; }
+
+    /* STEP 3: Generate Button */
+    .generate-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--primary), #c04060);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      letter-spacing: 0.5px;
+    }
+    .generate-btn:hover { opacity: .92; }
+    .generate-btn:active { transform: scale(.98); }
+    .generate-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* PROGRESS */
+    .progress-wrap { padding: 20px 24px; display: none; }
+    .progress-wrap.show { display: block; }
+    .progress-steps { display: flex; flex-direction: column; gap: 10px; }
+    .prog-step {
+      display: flex; align-items: center; gap: 12px;
+      font-size: 13.5px;
+      color: var(--muted);
+      transition: color .3s;
+    }
+    .prog-step.done { color: var(--accent); }
+    .prog-step.active { color: var(--text); font-weight: 700; }
+    .prog-icon {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: #f0f2f5;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+      transition: background .3s, color .3s;
+    }
+    .prog-step.done .prog-icon { background: var(--accent-light); color: var(--accent); }
+    .prog-step.active .prog-icon { background: var(--primary-light); color: var(--primary); }
+    .prog-spinner { animation: spin .8s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* RESULT SECTION */
+    .result-section { display: none; padding: 24px; border-top: 1px solid var(--border); }
+    .result-section.show { display: block; }
+    .result-grid { display: flex; flex-direction: column; gap: 16px; }
+    .result-field { border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .result-field-header {
+      background: #f8f9fb;
+      padding: 9px 14px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .result-field-label { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: #888; }
+    .result-field-body { padding: 12px 14px; }
+    .result-value {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.7;
+      min-height: 36px;
+      outline: none;
+      width: 100%;
+      border: none;
+      background: transparent;
+      font-family: 'Lato', sans-serif;
+      resize: none;
+    }
+    .result-value:focus { outline: none; }
+    .edit-hint { font-size: 11px; color: #bbb; cursor: pointer; }
+    .edit-hint:hover { color: var(--primary); }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag-badge {
+      padding: 3px 10px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .included-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+    .included-list li {
+      display: flex; align-items: flex-start; gap: 8px;
+      font-size: 13.5px;
+      color: #444;
+    }
+    .included-list li i { color: var(--accent); margin-top: 2px; flex-shrink: 0; }
+    .price-row { display: flex; align-items: baseline; gap: 12px; }
+    .price-main { font-size: 22px; font-weight: 700; color: var(--primary); }
+    .price-sale { font-size: 15px; color: var(--muted); text-decoration: line-through; }
+    .result-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .btn-use {
+      flex: 1;
+      padding: 13px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+      border-radius: 28px;
+      border: none;
+      cursor: pointer;
+      transition: background .2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-use:hover { background: var(--primary-dark); }
+    .btn-regen {
+      padding: 13px 20px;
+      background: #fff;
+      color: #444;
+      font-weight: 700;
+      font-size: 14px;
+      border-radius: 28px;
+      border: 2px solid var(--border);
+      cursor: pointer;
+      transition: border-color .2s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .btn-regen:hover { border-color: #aaa; }
+
+    /* ── RIGHT: PRODUCT PREVIEW ── */
+    .preview-panel { position: sticky; top: 20px; display: flex; flex-direction: column; gap: 16px; }
+    .preview-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .preview-card-header { padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 700; color: #555; display: flex; align-items: center; gap: 8px; }
+    .preview-img {
+      width: 100%; aspect-ratio: 1;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 96px;
+      transition: background 0.4s;
+    }
+    .preview-body { padding: 16px; }
+    .preview-vendor { font-size: 11px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin-bottom: 5px; }
+    .preview-title { font-size: 15px; font-weight: 700; color: var(--text); line-height: 1.4; margin-bottom: 8px; }
+    .preview-stars { color: #f5a623; font-size: 12px; margin-bottom: 8px; }
+    .preview-price-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+    .preview-price { font-size: 18px; font-weight: 700; color: var(--primary); }
+    .preview-price-orig { font-size: 13px; color: var(--muted); text-decoration: line-through; }
+    .preview-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .badge-new { background: var(--primary-light); color: var(--primary); border: 1.5px solid var(--primary); }
+    .badge-best { background: #ffd700; color: #333; }
+    .badge-sale { background: var(--primary); color: #fff; }
+    .preview-type {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      background: var(--accent-light);
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .preview-add-btn {
+      width: 100%;
+      padding: 11px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+      border: none;
+      border-radius: 28px;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: background .2s;
+    }
+    .preview-add-btn:hover { background: var(--primary-dark); }
+
+    /* Stats card */
+    .stats-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      display: none;
+    }
+    .stats-card.show { display: block; }
+    .stats-card h4 { font-size: 13px; font-weight: 700; margin-bottom: 14px; color: #555; }
+    .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid #f0f2f5; }
+    .stat-row:last-child { border-bottom: none; }
+    .stat-label { font-size: 12.5px; color: var(--muted); }
+    .stat-val { font-size: 13px; font-weight: 700; color: var(--text); }
+    .stat-good { color: var(--accent); }
+    .stat-warn { color: #e6a817; }
+
+    /* HISTORY */
+    .history-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+    .history-card h4 { font-size: 13px; font-weight: 700; margin-bottom: 14px; color: #555; display: flex; align-items: center; justify-content: space-between; }
+    .history-card h4 button { font-size: 11px; color: var(--primary); background: none; border: none; cursor: pointer; font-weight: 700; }
+    .history-list { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; }
+    .history-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .history-item:hover { background: var(--primary-light); border-color: var(--primary); }
+    .history-emoji { font-size: 22px; }
+    .history-info { flex: 1; min-width: 0; }
+    .history-kw { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .history-time { font-size: 11px; color: var(--muted); }
+    .history-empty { text-align: center; color: var(--muted); font-size: 13px; padding: 20px 0; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 28px; right: 28px;
+      background: #1e2a1e; color: #fff;
+      padding: 13px 20px; border-radius: 10px;
+      font-size: 14px; font-weight: 700;
+      display: flex; align-items: center; gap: 10px;
+      opacity: 0; transform: translateY(16px);
+      transition: opacity .3s, transform .3s;
+      pointer-events: none; z-index: 9999;
+      box-shadow: var(--shadow-lg);
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    /* Export modal */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.5); z-index: 2000;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: #fff; border-radius: 16px;
+      padding: 32px; max-width: 560px; width: 90%;
+      box-shadow: var(--shadow-lg);
+    }
+    .modal h2 { font-family: 'Playfair Display', serif; font-size: 22px; margin-bottom: 6px; }
+    .modal p { color: var(--muted); font-size: 13.5px; margin-bottom: 20px; }
+    .export-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .export-option {
+      padding: 16px;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: center;
+      transition: all .2s;
+    }
+    .export-option:hover, .export-option.selected { border-color: var(--primary); background: var(--primary-light); }
+    .export-option i { font-size: 28px; color: var(--primary); margin-bottom: 8px; }
+    .export-option h4 { font-size: 14px; font-weight: 700; }
+    .export-option p { font-size: 12px; color: var(--muted); margin: 0; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .btn-modal-confirm {
+      padding: 11px 24px; background: var(--primary); color: #fff;
+      border-radius: 24px; border: none; font-weight: 700; font-size: 14px; cursor: pointer;
+    }
+    .btn-modal-cancel {
+      padding: 11px 20px; background: #f4f6f9; color: #444;
+      border-radius: 24px; border: none; font-weight: 700; font-size: 14px; cursor: pointer;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 900px) {
+      .page-layout { grid-template-columns: 1fr; }
+      .preview-panel { position: static; }
+      .options-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .main { padding: 16px 12px 60px; }
+      .topbar-nav { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-logo"><span>🌸</span> Pinay Homeschooler Shop</div>
+  <nav class="topbar-nav">
+    <a href="index.html">View Shop</a>
+    <a href="admin-add-product.html">Manual Form</a>
+    <a href="generate-product.html" class="active">AI Generator</a>
+  </nav>
+</div>
+
+<div class="main">
+  <div class="page-header">
+    <h1><i class="fas fa-magic" style="color:var(--primary)"></i> Product Generator Workflow</h1>
+    <p>Enter a keyword → the system automatically builds a complete product listing ready to publish.</p>
+  </div>
+
+  <div class="page-layout">
+
+    <!-- LEFT: GENERATOR -->
+    <div>
+      <div class="gen-panel">
+        <div class="gen-panel-header">
+          <h2><i class="fas fa-robot"></i> Keyword → Product Workflow</h2>
+          <p>Type any life cycle topic and click Generate</p>
+        </div>
+
+        <!-- STEP 1: KEYWORD -->
+        <div class="step-section">
+          <div class="step-label"><span class="step-num">1</span> Enter Keyword</div>
+          <div class="keyword-input-wrap">
+            <input type="text" class="keyword-input" id="keywordInput"
+              placeholder="e.g. butterfly, frog life cycle, plant growth…"
+              oninput="clearKeywordBtn()" onkeydown="if(event.key==='Enter') runGenerate()" />
+            <button class="keyword-clear" id="clearBtn" onclick="clearKeyword()" style="display:none">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="keyword-suggestions">
+            <span class="kw-chip" onclick="setKeyword('Butterfly')">🦋 Butterfly</span>
+            <span class="kw-chip" onclick="setKeyword('Frog')">🐸 Frog</span>
+            <span class="kw-chip" onclick="setKeyword('Plant')">🌱 Plant</span>
+            <span class="kw-chip" onclick="setKeyword('Bee')">🐝 Bee</span>
+            <span class="kw-chip" onclick="setKeyword('Chicken')">🐔 Chicken</span>
+            <span class="kw-chip" onclick="setKeyword('Fish')">🐠 Fish</span>
+            <span class="kw-chip" onclick="setKeyword('Mosquito')">🦟 Mosquito</span>
+            <span class="kw-chip" onclick="setKeyword('Snail')">🐌 Snail</span>
+            <span class="kw-chip" onclick="setKeyword('Dragonfly')">🐉 Dragonfly</span>
+            <span class="kw-chip" onclick="setKeyword('Spider')">🕷 Spider</span>
+            <span class="kw-chip" onclick="setKeyword('Mushroom')">🍄 Mushroom</span>
+            <span class="kw-chip" onclick="setKeyword('Salmon')">🐟 Salmon</span>
+          </div>
+        </div>
+
+        <!-- STEP 2: OPTIONS -->
+        <div class="step-section">
+          <div class="step-label"><span class="step-num">2</span> Configure Options</div>
+          <div class="options-grid">
+            <div class="option-group">
+              <label>Product Type</label>
+              <select class="option-select" id="optType">
+                <option value="printable">Printable (Digital)</option>
+                <option value="bundle">Bundle</option>
+                <option value="physical">Physical Kit</option>
+                <option value="ebook">eBook</option>
+              </select>
+            </div>
+            <div class="option-group">
+              <label>Grade Level</label>
+              <select class="option-select" id="optGrade">
+                <option value="k2">K–2 (Ages 5–8)</option>
+                <option value="k5" selected>K–5 (Ages 5–11)</option>
+                <option value="36">Grades 3–6</option>
+                <option value="all">All Ages</option>
+              </select>
+            </div>
+            <div class="option-group">
+              <label>Price Range</label>
+              <select class="option-select" id="optPrice">
+                <option value="budget">Budget (₱99–₱149)</option>
+                <option value="standard" selected>Standard (₱149–₱249)</option>
+                <option value="premium">Premium (₱299–₱499)</option>
+                <option value="bundle">Bundle (₱499–₱799)</option>
+              </select>
+            </div>
+            <div class="option-group">
+              <label>Badge</label>
+              <select class="option-select" id="optBadge">
+                <option value="">No Badge</option>
+                <option value="new" selected>New</option>
+                <option value="bestseller">Best Seller</option>
+                <option value="sale">On Sale</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top:12px">
+            <label style="font-size:12.5px; font-weight:700; color:#555; display:block; margin-bottom:8px">Include Sections</label>
+            <div class="checkbox-group">
+              <label class="check-chip"><input type="checkbox" id="chkDesc" checked /> Description</label>
+              <label class="check-chip"><input type="checkbox" id="chkIncluded" checked /> What's Included</label>
+              <label class="check-chip"><input type="checkbox" id="chkTags" checked /> Tags</label>
+              <label class="check-chip"><input type="checkbox" id="chkSEO" checked /> SEO Data</label>
+              <label class="check-chip"><input type="checkbox" id="chkVariants" /> Variants</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3: GENERATE -->
+        <div class="step-section" style="border-bottom:none">
+          <div class="step-label"><span class="step-num">3</span> Generate Product</div>
+          <button class="generate-btn" id="generateBtn" onclick="runGenerate()">
+            <i class="fas fa-magic"></i> Generate Product Listing
+          </button>
+        </div>
+
+        <!-- PROGRESS -->
+        <div class="progress-wrap" id="progressWrap">
+          <div class="progress-steps" id="progressSteps">
+            <div class="prog-step" id="prog1"><div class="prog-icon"><i class="fas fa-search"></i></div> Analyzing keyword…</div>
+            <div class="prog-step" id="prog2"><div class="prog-icon"><i class="fas fa-heading"></i></div> Generating title & description…</div>
+            <div class="prog-step" id="prog3"><div class="prog-icon"><i class="fas fa-list-ul"></i></div> Building "What's Included" list…</div>
+            <div class="prog-step" id="prog4"><div class="prog-icon"><i class="fas fa-tags"></i></div> Generating tags & SEO…</div>
+            <div class="prog-step" id="prog5"><div class="prog-icon"><i class="fas fa-peso-sign"></i></div> Calculating price recommendation…</div>
+            <div class="prog-step" id="prog6"><div class="prog-icon"><i class="fas fa-check-circle"></i></div> Finalizing product…</div>
+          </div>
+        </div>
+
+        <!-- RESULT -->
+        <div class="result-section" id="resultSection">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px">
+            <div style="font-size:13px; font-weight:700; color:var(--accent); display:flex; align-items:center; gap:8px">
+              <i class="fas fa-check-circle"></i> Product generated successfully!
+            </div>
+            <button onclick="showExportModal()" style="font-size:12px; color:var(--purple); font-weight:700; background:none; border:none; cursor:pointer">
+              <i class="fas fa-file-export"></i> Export
+            </button>
+          </div>
+
+          <div class="result-grid" id="resultGrid"></div>
+
+          <div class="result-actions">
+            <button class="btn-use" onclick="useProduct()">
+              <i class="fas fa-upload"></i> Use This Product
+            </button>
+            <button class="btn-regen" onclick="runGenerate()">
+              <i class="fas fa-sync-alt"></i> Regenerate
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: PREVIEW + HISTORY -->
+    <div class="preview-panel">
+
+      <!-- Product Preview Card -->
+      <div class="preview-card">
+        <div class="preview-card-header"><i class="fas fa-eye" style="color:var(--primary)"></i> Live Product Preview</div>
+        <div class="preview-img" id="previewImg" style="background:linear-gradient(135deg,#f0f2f5,#e0e4ea)">
+          <span id="previewEmoji" style="font-size:96px; opacity:.25">🌸</span>
+        </div>
+        <div class="preview-body">
+          <div class="preview-vendor">Pinay Homeschooler</div>
+          <div id="previewBadge" style="display:none; margin-bottom:6px"></div>
+          <div class="preview-title" id="previewTitle" style="color:#bbb">Your product title will appear here…</div>
+          <div class="preview-stars">★★★★★ <span style="color:#aaa; font-size:11px">(new)</span></div>
+          <div class="preview-price-row">
+            <span class="preview-price" id="previewPrice" style="color:#bbb">₱—</span>
+            <span class="preview-price-orig" id="previewOrig" style="display:none"></span>
+          </div>
+          <span class="preview-type" id="previewType">Printable</span>
+          <button class="preview-add-btn" id="previewAddBtn" disabled style="opacity:.4">
+            <i class="fas fa-shopping-bag"></i> Add to Cart
+          </button>
+        </div>
+      </div>
+
+      <!-- Quality Score -->
+      <div class="stats-card" id="statsCard">
+        <h4><i class="fas fa-chart-bar" style="color:var(--purple)"></i> Product Quality Score</h4>
+        <div class="stat-row">
+          <span class="stat-label">Title</span>
+          <span class="stat-val stat-good" id="scoreTitle">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Description</span>
+          <span class="stat-val stat-good" id="scoreDesc">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">SEO</span>
+          <span class="stat-val" id="scoreSEO">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Tags</span>
+          <span class="stat-val" id="scoreTags">—</span>
+        </div>
+        <div class="stat-row" style="border-top:2px solid var(--border); margin-top:4px; padding-top:10px">
+          <span class="stat-label" style="font-weight:700">Overall</span>
+          <span class="stat-val" id="scoreOverall" style="font-size:16px">—</span>
+        </div>
+      </div>
+
+      <!-- History -->
+      <div class="history-card">
+        <h4>
+          <span><i class="fas fa-history" style="color:var(--muted); margin-right:6px"></i> Recent Generations</span>
+          <button onclick="clearHistory()">Clear</button>
+        </h4>
+        <div class="history-list" id="historyList">
+          <div class="history-empty" id="historyEmpty">No generations yet</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal">
+    <h2>Export Product</h2>
+    <p>Choose how you want to export this product data.</p>
+    <div class="export-options">
+      <div class="export-option selected" id="expJson" onclick="selectExport('json')">
+        <i class="fas fa-file-code"></i>
+        <h4>JSON</h4>
+        <p>Structured data for developers</p>
+      </div>
+      <div class="export-option" id="expCsv" onclick="selectExport('csv')">
+        <i class="fas fa-file-csv"></i>
+        <h4>CSV</h4>
+        <p>For spreadsheet import</p>
+      </div>
+      <div class="export-option" id="expTxt" onclick="selectExport('txt')">
+        <i class="fas fa-file-alt"></i>
+        <h4>Text</h4>
+        <p>Plain text copy-paste</p>
+      </div>
+      <div class="export-option" id="expShopify" onclick="selectExport('shopify')">
+        <i class="fas fa-store"></i>
+        <h4>Shopify CSV</h4>
+        <p>Ready for Shopify import</p>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeExportModal()">Cancel</button>
+      <button class="btn-modal-confirm" onclick="doExport()"><i class="fas fa-download"></i> Download</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><i class="fas fa-check-circle"></i> <span id="toastMsg"></span></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// PRODUCT KNOWLEDGE BASE
+// ═══════════════════════════════════════════════════════
+const KB = {
+  butterfly: {
+    emoji: '🦋', color: 'linear-gradient(135deg,#d4f1c0,#a8e6a1)',
+    aliases: ['butterflies','caterpillar','metamorphosis','chrysalis'],
+    stages: ['Egg', 'Caterpillar (Larva)', 'Chrysalis (Pupa)', 'Adult Butterfly'],
+    funFact: 'Butterflies taste with their feet!',
+    sciName: 'Order Lepidoptera',
+    habitat: 'gardens, meadows, forests'
+  },
+  frog: {
+    emoji: '🐸', color: 'linear-gradient(135deg,#c0e8f1,#7ecfe8)',
+    aliases: ['frogs','tadpole','amphibian','toad'],
+    stages: ['Egg Mass', 'Tadpole', 'Froglet', 'Adult Frog'],
+    funFact: 'Frogs breathe through their skin!',
+    sciName: 'Order Anura',
+    habitat: 'ponds, swamps, rainforests'
+  },
+  plant: {
+    emoji: '🌱', color: 'linear-gradient(135deg,#e8f5d0,#b5dc7a)',
+    aliases: ['plants','seed','flower','tree','germination','growth'],
+    stages: ['Seed', 'Germination', 'Seedling', 'Young Plant', 'Mature Plant', 'Flowering', 'Fruit & Seed Dispersal'],
+    funFact: 'Plants grow toward light — this is called phototropism!',
+    sciName: 'Kingdom Plantae',
+    habitat: 'soil, water, air'
+  },
+  bee: {
+    emoji: '🐝', color: 'linear-gradient(135deg,#fde8b0,#fbc85a)',
+    aliases: ['bees','honey bee','bumble bee','hive','queen'],
+    stages: ['Egg', 'Larva', 'Pupa', 'Adult Worker Bee'],
+    funFact: 'A queen bee can lay up to 2,000 eggs per day!',
+    sciName: 'Order Hymenoptera',
+    habitat: 'hives, gardens, forests'
+  },
+  chicken: {
+    emoji: '🐔', color: 'linear-gradient(135deg,#ffd6d6,#ffaaaa)',
+    aliases: ['chickens','hen','egg','chick','rooster','poultry'],
+    stages: ['Fertilized Egg', 'Embryo (Day 1–21)', 'Hatching Chick', 'Chick', 'Pullet/Cockerel', 'Adult Hen/Rooster'],
+    funFact: 'A chicken egg takes 21 days to hatch!',
+    sciName: 'Gallus gallus domesticus',
+    habitat: 'farms, backyards'
+  },
+  fish: {
+    emoji: '🐠', color: 'linear-gradient(135deg,#ffd6f0,#f59fd4)',
+    aliases: ['fishes','salmon','tilapia','bangus','milkfish','aquatic'],
+    stages: ['Egg', 'Larva', 'Fry', 'Fingerling', 'Juvenile', 'Adult Fish'],
+    funFact: 'Some fish, like salmon, swim thousands of miles to spawn!',
+    sciName: 'Class Actinopterygii',
+    habitat: 'oceans, rivers, lakes'
+  },
+  mosquito: {
+    emoji: '🦟', color: 'linear-gradient(135deg,#d0e8ff,#8bbce8)',
+    aliases: ['mosquitoes','dengue','aedes','malaria'],
+    stages: ['Egg', 'Larva (Wiggler)', 'Pupa (Tumbler)', 'Adult Mosquito'],
+    funFact: 'Only female mosquitoes bite — they need blood to produce eggs!',
+    sciName: 'Family Culicidae',
+    habitat: 'stagnant water, tropical areas'
+  },
+  snail: {
+    emoji: '🐌', color: 'linear-gradient(135deg,#e0f8c8,#9fd87a)',
+    aliases: ['snails','slug','gastropod','shell'],
+    stages: ['Egg', 'Hatchling', 'Juvenile', 'Adult Snail'],
+    funFact: 'Snails can sleep for up to 3 years!',
+    sciName: 'Class Gastropoda',
+    habitat: 'gardens, forests, ponds'
+  },
+  dragonfly: {
+    emoji: '🐉', color: 'linear-gradient(135deg,#dce0ff,#9fa8f5)',
+    aliases: ['dragonflies','damselfly','nymph'],
+    stages: ['Egg', 'Nymph (Aquatic)', 'Metamorphosis', 'Adult Dragonfly'],
+    funFact: 'Dragonflies have been around for over 300 million years!',
+    sciName: 'Order Odonata',
+    habitat: 'ponds, lakes, streams'
+  },
+  spider: {
+    emoji: '🕷', color: 'linear-gradient(135deg,#f0d4f5,#d89fe8)',
+    aliases: ['spiders','arachnid','web','tarantula'],
+    stages: ['Egg Sac', 'Spiderling', 'Juvenile', 'Adult Spider'],
+    funFact: 'Spiders are not insects — they have 8 legs and are arachnids!',
+    sciName: 'Order Araneae',
+    habitat: 'forests, homes, gardens'
+  },
+  mushroom: {
+    emoji: '🍄', color: 'linear-gradient(135deg,#ffe8c8,#f5c07a)',
+    aliases: ['mushrooms','fungi','spore','mycelium'],
+    stages: ['Spore', 'Germination', 'Mycelium', 'Primordia', 'Fruiting Body (Mushroom)'],
+    funFact: 'Mushrooms are neither plants nor animals — they are fungi!',
+    sciName: 'Kingdom Fungi',
+    habitat: 'soil, logs, forests'
+  },
+  salmon: {
+    emoji: '🐟', color: 'linear-gradient(135deg,#ffd6f0,#f59fd4)',
+    aliases: ['salmons','trout','spawn','pacific'],
+    stages: ['Egg', 'Alevin', 'Fry', 'Parr', 'Smolt', 'Adult Salmon'],
+    funFact: 'Salmon return to the exact stream where they were born to spawn!',
+    sciName: 'Family Salmonidae',
+    habitat: 'rivers, oceans, streams'
+  }
+};
+
+function resolveKeyword(raw) {
+  const k = raw.toLowerCase().trim().replace(/life cycle|worksheet|printable|activity/gi, '').trim();
+  for (const [key, data] of Object.entries(KB)) {
+    if (k.includes(key) || data.aliases.some(a => k.includes(a))) return { key, data };
+  }
+  // Fallback: generic
+  return {
+    key: k || 'animal',
+    data: {
+      emoji: '📖',
+      color: 'linear-gradient(135deg,#e8f0ff,#c0d8ff)',
+      stages: ['Stage 1', 'Stage 2', 'Stage 3', 'Adult'],
+      funFact: 'Every living thing has a life cycle!',
+      sciName: '',
+      habitat: 'various environments'
+    }
+  };
+}
+
+// ═══════════════════════════════════════════════════════
+// CONTENT TEMPLATES
+// ═══════════════════════════════════════════════════════
+function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+function genTitle(keyword, type, grade) {
+  const kw = capitalize(keyword);
+  const gradeLabels = { k2: 'Kindergarten–Grade 2', k5: 'K–Grade 5', '36': 'Grades 3–6', all: 'All Grades' };
+  const typeLabels = { printable: 'Printable Workbook', bundle: 'Complete Bundle', physical: 'Activity Kit', ebook: 'Interactive eBook' };
+  const variants = [
+    `${kw} Life Cycle ${typeLabels[type]} – ${gradeLabels[grade]}`,
+    `${kw} Life Cycle: Stages & Activities ${typeLabels[type]}`,
+    `Exploring the ${kw} Life Cycle – ${typeLabels[type]}`,
+    `${kw} Life Cycle Science ${typeLabels[type]} for ${gradeLabels[grade]}`,
+  ];
+  return variants[Math.floor(Math.random() * variants.length)];
+}
+
+function genDescription(keyword, data, type) {
+  const kw = capitalize(keyword);
+  const stages = data.stages.join(' → ');
+  const typeDesc = {
+    printable: 'printable PDF workbook',
+    bundle: 'comprehensive bundle of printables, activities, and resources',
+    physical: 'hands-on activity kit with physical materials',
+    ebook: 'interactive digital eBook'
+  }[type];
+  return `Bring science to life with this beautifully illustrated ${typeDesc} all about the ${kw} Life Cycle!\n\nYour learner will discover all ${data.stages.length} amazing stages: ${stages}. Each page is thoughtfully designed to engage different learning styles — visual learners will love the detailed illustrations, while kinesthetic learners will enjoy the hands-on activities.\n\nDid you know? ${data.funFact} Share this fascinating fact with your child as you explore the ${kw}'s incredible journey together.\n\nPerfect for Filipino homeschooling families following any curriculum — classical, Charlotte Mason, or eclectic!`;
+}
+
+function genIncluded(keyword, type, data) {
+  const kw = capitalize(keyword);
+  const base = [
+    `${kw} Life Cycle diagram (full-color + black & white versions)`,
+    `Sequencing cards — cut, arrange & paste (${data.stages.length} stages)`,
+    `Labeling worksheets for each life cycle stage`,
+    `Observation journal pages (6 pages)`,
+    `Vocabulary word wall cards with definitions`,
+    `Coloring pages featuring the ${kw} at each stage`,
+    `Mini-book template (foldable, student-made)`,
+    `Fun fact cards (great for narration or display)`,
+    `${kw} Life Cycle wheel / spinner activity`,
+    `Assessment quiz with answer key`,
+    `Certificate of Completion (personalized)`,
+    `Teacher / Parent guide with activity suggestions`,
+  ];
+  if (type === 'bundle') base.push(`BONUS: ${kw} habitat diorama template`, `BONUS: ${kw} research report template`);
+  if (type === 'physical') base.push(`3D model instructions`, `Activity cards for hands-on play`);
+  return base.slice(0, type === 'bundle' ? 12 : 9);
+}
+
+function genTags(keyword, data, type, grade) {
+  const kw = keyword.toLowerCase();
+  const base = [
+    `${kw} life cycle`, 'life cycle', 'homeschool', 'printable', 'science',
+    'Filipino homeschool', 'Philippines', 'elementary science', 'worksheet',
+    'hands-on learning', 'STEM'
+  ];
+  if (type === 'bundle') base.push('bundle', 'value pack');
+  if (grade === 'k2') base.push('kindergarten', 'preschool', 'early childhood');
+  if (grade === 'k5') base.push('elementary', 'primary school');
+  if (data.habitat) base.push(data.habitat.split(',')[0].trim());
+  base.push(...(data.aliases || []).slice(0, 3));
+  return [...new Set(base)].slice(0, 14);
+}
+
+function genPrice(priceRange, type) {
+  const ranges = {
+    budget: { min: 99, max: 149 },
+    standard: { min: 149, max: 249 },
+    premium: { min: 299, max: 499 },
+    bundle: { min: 499, max: 799 }
+  };
+  const r = ranges[priceRange] || ranges.standard;
+  const price = Math.round((r.min + Math.random() * (r.max - r.min)) / 50) * 50;
+  const origPrice = priceRange === 'standard' || priceRange === 'budget' ? null : Math.round(price * 1.3 / 50) * 50;
+  return { price, origPrice };
+}
+
+function genSEO(keyword, title) {
+  const kw = capitalize(keyword);
+  return {
+    metaTitle: `${title} | Pinay Homeschooler Shop`,
+    metaDesc: `Download our ${kw} Life Cycle printable workbook — perfect for Filipino homeschoolers! Includes diagrams, sequencing cards, labeling sheets, coloring pages & more. Instant PDF download.`,
+    urlHandle: `${keyword.toLowerCase().replace(/\s+/g, '-')}-life-cycle-printable-workbook`
+  };
+}
+
+function genVariants(keyword, type) {
+  if (type !== 'printable') return [];
+  return [
+    { name: 'Format', options: ['PDF (Print at Home)', 'Google Slides'] },
+    { name: 'Size', options: ['A4', 'US Letter (8.5"×11")'] }
+  ];
+}
+
+// ═══════════════════════════════════════════════════════
+// MAIN GENERATE FUNCTION
+// ═══════════════════════════════════════════════════════
+let currentProduct = null;
+let history = JSON.parse(localStorage.getItem('genHistory') || '[]');
+
+async function runGenerate() {
+  const raw = document.getElementById('keywordInput').value.trim();
+  if (!raw) { showToast('Please enter a keyword first!', 'warn'); return; }
+
+  const type = document.getElementById('optType').value;
+  const grade = document.getElementById('optGrade').value;
+  const priceRange = document.getElementById('optPrice').value;
+  const badge = document.getElementById('optBadge').value;
+
+  // UI: start
+  document.getElementById('generateBtn').disabled = true;
+  document.getElementById('progressWrap').classList.add('show');
+  document.getElementById('resultSection').classList.remove('show');
+  resetProgress();
+
+  const { key, data } = resolveKeyword(raw);
+
+  // Animate progress steps
+  const steps = [
+    { id: 'prog1', delay: 400 },
+    { id: 'prog2', delay: 700 },
+    { id: 'prog3', delay: 500 },
+    { id: 'prog4', delay: 500 },
+    { id: 'prog5', delay: 400 },
+    { id: 'prog6', delay: 300 },
+  ];
+
+  for (const step of steps) {
+    setProgActive(step.id);
+    await sleep(step.delay);
+    setProgDone(step.id);
+  }
+
+  // Build product
+  const title = genTitle(key, type, grade);
+  const description = genDescription(key, data, type);
+  const included = genIncluded(key, type, data);
+  const tags = genTags(key, data, type, grade);
+  const { price, origPrice } = genPrice(priceRange, type);
+  const seo = genSEO(key, title);
+  const variants = genVariants(key, type);
+
+  currentProduct = { keyword: raw, key, data, title, description, included, tags, price, origPrice, seo, type, grade, badge, variants };
+
+  // Update preview card
+  updatePreviewCard(currentProduct);
+
+  // Render results
+  renderResults(currentProduct);
+
+  // Update quality score
+  updateQualityScore(currentProduct);
+
+  // Add to history
+  addToHistory({ keyword: raw, key, emoji: data.emoji, color: data.color, title, time: new Date() });
+
+  // Done
+  document.getElementById('generateBtn').disabled = false;
+  document.getElementById('progressWrap').classList.remove('show');
+  document.getElementById('resultSection').classList.add('show');
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function resetProgress() {
+  for (let i = 1; i <= 6; i++) {
+    const el = document.getElementById('prog' + i);
+    el.classList.remove('done', 'active');
+  }
+}
+function setProgActive(id) {
+  const el = document.getElementById(id);
+  el.classList.add('active');
+  el.querySelector('.prog-icon').innerHTML = '<i class="fas fa-circle-notch prog-spinner"></i>';
+}
+function setProgDone(id) {
+  const el = document.getElementById(id);
+  el.classList.remove('active');
+  el.classList.add('done');
+  el.querySelector('.prog-icon').innerHTML = '<i class="fas fa-check"></i>';
+}
+
+function updatePreviewCard(p) {
+  document.getElementById('previewImg').style.background = p.data.color;
+  document.getElementById('previewEmoji').style.opacity = '1';
+  document.getElementById('previewEmoji').textContent = p.data.emoji;
+  document.getElementById('previewTitle').style.color = '';
+  document.getElementById('previewTitle').textContent = p.title;
+  document.getElementById('previewPrice').style.color = '';
+  document.getElementById('previewPrice').textContent = `₱${p.price.toLocaleString()}.00`;
+  const origEl = document.getElementById('previewOrig');
+  if (p.origPrice) { origEl.textContent = `₱${p.origPrice.toLocaleString()}.00`; origEl.style.display = ''; }
+  else origEl.style.display = 'none';
+
+  const typeMap = { printable: 'Printable', bundle: 'Bundle', physical: 'Physical Kit', ebook: 'eBook' };
+  document.getElementById('previewType').textContent = typeMap[p.type] || 'Printable';
+
+  const badgeEl = document.getElementById('previewBadge');
+  if (p.badge) {
+    const badgeMap = { new: ['New', 'badge-new'], bestseller: ['Best Seller', 'badge-best'], sale: ['SALE', 'badge-sale'] };
+    const [label, cls] = badgeMap[p.badge] || ['', ''];
+    badgeEl.className = `preview-badge ${cls}`;
+    badgeEl.textContent = label;
+    badgeEl.style.display = '';
+  } else badgeEl.style.display = 'none';
+
+  const addBtn = document.getElementById('previewAddBtn');
+  addBtn.disabled = false;
+  addBtn.style.opacity = '1';
+  addBtn.onclick = () => showToast(`"${p.title}" added to cart!`);
+
+  document.getElementById('statsCard').classList.add('show');
+}
+
+function renderResults(p) {
+  const grid = document.getElementById('resultGrid');
+  const sections = [];
+
+  // Title
+  sections.push(field('📌 Product Title', p.title, 'text', 'prodTitle'));
+
+  // Description
+  if (document.getElementById('chkDesc').checked)
+    sections.push(field('📝 Description', p.description, 'textarea', 'prodDesc'));
+
+  // Included
+  if (document.getElementById('chkIncluded').checked)
+    sections.push(fieldIncluded('✅ What\'s Included', p.included));
+
+  // Tags
+  if (document.getElementById('chkTags').checked)
+    sections.push(fieldTags('🏷 Tags', p.tags));
+
+  // Price
+  sections.push(fieldPrice('💰 Price', p.price, p.origPrice));
+
+  // SEO
+  if (document.getElementById('chkSEO').checked)
+    sections.push(fieldSEO('🔍 SEO Data', p.seo));
+
+  // Variants
+  if (document.getElementById('chkVariants').checked && p.variants.length)
+    sections.push(fieldVariants('🔀 Variants', p.variants));
+
+  grid.innerHTML = sections.join('');
+}
+
+function field(label, value, type, id) {
+  const body = type === 'textarea'
+    ? `<textarea class="result-value" id="${id}" rows="5" style="resize:vertical">${value}</textarea>`
+    : `<input class="result-value" id="${id}" type="text" value="${value.replace(/"/g,'&quot;')}" style="font-weight:700" />`;
+  return `<div class="result-field">
+    <div class="result-field-header">
+      <span class="result-field-label">${label}</span>
+      <span class="edit-hint" title="Click to edit"><i class="fas fa-pencil-alt"></i> Edit</span>
+    </div>
+    <div class="result-field-body">${body}</div>
+  </div>`;
+}
+
+function fieldIncluded(label, items) {
+  const list = items.map(i => `<li><i class="fas fa-check-circle"></i> ${i}</li>`).join('');
+  return `<div class="result-field">
+    <div class="result-field-header">
+      <span class="result-field-label">${label}</span>
+      <span class="edit-hint">${items.length} items</span>
+    </div>
+    <div class="result-field-body"><ul class="included-list">${list}</ul></div>
+  </div>`;
+}
+
+function fieldTags(label, tags) {
+  const badges = tags.map(t => `<span class="tag-badge">${t}</span>`).join('');
+  return `<div class="result-field">
+    <div class="result-field-header">
+      <span class="result-field-label">${label}</span>
+      <span class="edit-hint">${tags.length} tags</span>
+    </div>
+    <div class="result-field-body"><div class="tag-row">${badges}</div></div>
+  </div>`;
+}
+
+function fieldPrice(label, price, origPrice) {
+  const orig = origPrice ? `<span class="price-sale">₱${origPrice.toLocaleString()}.00</span>` : '';
+  return `<div class="result-field">
+    <div class="result-field-header">
+      <span class="result-field-label">${label}</span>
+      ${origPrice ? '<span class="edit-hint" style="color:var(--accent)">On sale!</span>' : ''}
+    </div>
+    <div class="result-field-body">
+      <div class="price-row">
+        <span class="price-main">₱${price.toLocaleString()}.00</span>
+        ${orig}
+      </div>
+    </div>
+  </div>`;
+}
+
+function fieldSEO(label, seo) {
+  return `<div class="result-field">
+    <div class="result-field-header"><span class="result-field-label">${label}</span></div>
+    <div class="result-field-body" style="display:flex;flex-direction:column;gap:10px">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#aaa;margin-bottom:3px">META TITLE</div>
+        <div style="font-size:13.5px;color:#1a0dab">${seo.metaTitle}</div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#aaa;margin-bottom:3px">META DESCRIPTION</div>
+        <div style="font-size:13px;color:#545454">${seo.metaDesc}</div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#aaa;margin-bottom:3px">URL HANDLE</div>
+        <div style="font-size:12.5px;color:#006621">/products/${seo.urlHandle}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function fieldVariants(label, variants) {
+  const rows = variants.map(v =>
+    `<div style="margin-bottom:8px"><strong style="font-size:12.5px">${v.name}:</strong> ${v.options.join(' · ')}</div>`
+  ).join('');
+  return `<div class="result-field">
+    <div class="result-field-header"><span class="result-field-label">${label}</span></div>
+    <div class="result-field-body" style="font-size:13.5px;color:#555">${rows}</div>
+  </div>`;
+}
+
+function updateQualityScore(p) {
+  const titleLen = p.title.length;
+  const descLen = p.description.length;
+  const tagCount = p.tags.length;
+
+  const tScore = titleLen > 40 && titleLen < 80 ? '✅ Good' : '⚠️ Check';
+  const dScore = descLen > 200 ? '✅ Good' : '⚠️ Too short';
+  const sScore = p.seo.metaDesc.length > 120 ? '✅ Good' : '⚠️ Short';
+  const gScore = tagCount >= 10 ? '✅ Good' : '⚠️ Add more';
+
+  document.getElementById('scoreTitle').textContent = tScore;
+  document.getElementById('scoreTitle').className = 'stat-val ' + (tScore.includes('✅') ? 'stat-good' : 'stat-warn');
+  document.getElementById('scoreDesc').textContent = dScore;
+  document.getElementById('scoreDesc').className = 'stat-val ' + (dScore.includes('✅') ? 'stat-good' : 'stat-warn');
+  document.getElementById('scoreSEO').textContent = sScore;
+  document.getElementById('scoreSEO').className = 'stat-val ' + (sScore.includes('✅') ? 'stat-good' : 'stat-warn');
+  document.getElementById('scoreTags').textContent = gScore;
+  document.getElementById('scoreTags').className = 'stat-val ' + (gScore.includes('✅') ? 'stat-good' : 'stat-warn');
+
+  const goods = [tScore, dScore, sScore, gScore].filter(s => s.includes('✅')).length;
+  const pct = Math.round((goods / 4) * 100);
+  const overall = pct === 100 ? '🌟 100%' : pct >= 75 ? `✅ ${pct}%` : `⚠️ ${pct}%`;
+  document.getElementById('scoreOverall').textContent = overall;
+  document.getElementById('scoreOverall').className = 'stat-val ' + (pct >= 75 ? 'stat-good' : 'stat-warn');
+}
+
+// ── HISTORY ──
+function addToHistory(item) {
+  history.unshift(item);
+  if (history.length > 10) history = history.slice(0, 10);
+  localStorage.setItem('genHistory', JSON.stringify(history));
+  renderHistory();
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  const empty = document.getElementById('historyEmpty');
+  if (!history.length) { empty.style.display = ''; list.innerHTML = '<div class="history-empty" id="historyEmpty">No generations yet</div>'; return; }
+  list.innerHTML = history.map((h, i) => `
+    <div class="history-item" onclick="loadHistory(${i})">
+      <span class="history-emoji">${h.emoji}</span>
+      <div class="history-info">
+        <div class="history-kw">${h.keyword}</div>
+        <div class="history-time">${timeAgo(new Date(h.time))}</div>
+      </div>
+      <i class="fas fa-redo" style="color:#ccc;font-size:12px"></i>
+    </div>`).join('');
+}
+
+function loadHistory(i) {
+  const h = history[i];
+  document.getElementById('keywordInput').value = h.keyword;
+  document.getElementById('clearBtn').style.display = '';
+  runGenerate();
+}
+
+function clearHistory() {
+  history = [];
+  localStorage.setItem('genHistory', '[]');
+  renderHistory();
+  showToast('History cleared');
+}
+
+function timeAgo(date) {
+  const s = Math.round((Date.now() - date) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return `${Math.round(s/60)}m ago`;
+  if (s < 86400) return `${Math.round(s/3600)}h ago`;
+  return date.toLocaleDateString();
+}
+
+// ── KEYWORD UI ──
+function setKeyword(kw) {
+  document.getElementById('keywordInput').value = kw;
+  document.getElementById('clearBtn').style.display = '';
+  runGenerate();
+}
+function clearKeyword() {
+  document.getElementById('keywordInput').value = '';
+  document.getElementById('clearBtn').style.display = 'none';
+}
+function clearKeywordBtn() {
+  const v = document.getElementById('keywordInput').value;
+  document.getElementById('clearBtn').style.display = v ? '' : 'none';
+}
+
+// ── EXPORT ──
+let exportFormat = 'json';
+function selectExport(fmt) {
+  exportFormat = fmt;
+  ['json','csv','txt','shopify'].forEach(f => {
+    document.getElementById('exp'+f.charAt(0).toUpperCase()+f.slice(1))?.classList.toggle('selected', f === fmt);
+  });
+}
+function showExportModal() {
+  if (!currentProduct) { showToast('Generate a product first!', 'warn'); return; }
+  document.getElementById('exportModal').classList.add('show');
+}
+function closeExportModal() { document.getElementById('exportModal').classList.remove('show'); }
+function doExport() {
+  const p = currentProduct;
+  let content = '', filename = '', mime = '';
+  if (exportFormat === 'json') {
+    content = JSON.stringify({ title: p.title, description: p.description, included: p.included, tags: p.tags, price: p.price, origPrice: p.origPrice, type: p.type, seo: p.seo }, null, 2);
+    filename = `${p.key}-product.json`; mime = 'application/json';
+  } else if (exportFormat === 'csv') {
+    content = `Title,Price,Type,Tags\n"${p.title}",${p.price},${p.type},"${p.tags.join(';')}"`;
+    filename = `${p.key}-product.csv`; mime = 'text/csv';
+  } else if (exportFormat === 'txt') {
+    content = `PRODUCT: ${p.title}\nPRICE: ₱${p.price}.00\nTYPE: ${p.type}\n\nDESCRIPTION:\n${p.description}\n\nWHAT'S INCLUDED:\n${p.included.map((i,n)=>`${n+1}. ${i}`).join('\n')}\n\nTAGS: ${p.tags.join(', ')}\n\nSEO TITLE: ${p.seo.metaTitle}\nSEO DESC: ${p.seo.metaDesc}\nURL: /products/${p.seo.urlHandle}`;
+    filename = `${p.key}-product.txt`; mime = 'text/plain';
+  } else {
+    content = `Handle,Title,Body (HTML),Vendor,Type,Tags,Published,Variant Price,Variant Compare At Price\n${p.seo.urlHandle},"${p.title}","${p.description.replace(/\n/g,'<br>')}",Pinay Homeschooler Shop,${p.type},"${p.tags.join(', ')}",true,${p.price},${p.origPrice||''}`;
+    filename = `${p.key}-shopify-import.csv`; mime = 'text/csv';
+  }
+  const blob = new Blob([content], { type: mime });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  closeExportModal();
+  showToast(`Exported as ${filename}`);
+}
+
+// ── USE PRODUCT ──
+function useProduct() {
+  if (!currentProduct) return;
+  // Save to sessionStorage so admin form can read it
+  sessionStorage.setItem('draftProduct', JSON.stringify(currentProduct));
+  showToast('Opening product form with generated data…');
+  setTimeout(() => window.open('admin-add-product.html', '_blank'), 800);
+}
+
+// ── TOAST ──
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.style.background = type === 'warn' ? '#7a4a1e' : '#1e2a1e';
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Init
+renderHistory();
+</script>
+</body>
+</html>

@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
 from pathlib import Path
 
 from .config import load_config
-from .orchestrator import Orchestrator, PlanStep
+from .orchestrator import Orchestrator
+from .planner import StaticPlanner, Step
 from .providers import check_providers
 
 
@@ -31,7 +31,7 @@ def _print_providers(statuses, *, as_json: bool) -> None:
             print(f"  {mark} {p.name}{vision}{err}")
 
 
-def _print_result(result, *, as_json: bool) -> None:
+def _print_step_result(result, *, as_json: bool) -> None:
     if as_json:
         data = {
             "model": result.model,
@@ -58,6 +58,36 @@ def _print_result(result, *, as_json: bool) -> None:
                 print(result.text)
 
 
+def _print_run_result(run_result, *, as_json: bool) -> None:
+    if as_json:
+        data = {
+            "status": run_result.status,
+            "summary": run_result.summary,
+            "escalation_reason": run_result.escalation_reason,
+            "history": [
+                {
+                    "model": r.model,
+                    "footer": {
+                        "status": r.footer.status,
+                        "files_changed": r.footer.files_changed,
+                        "next": r.footer.next,
+                    },
+                    "error": r.error,
+                }
+                for r in run_result.history
+            ],
+        }
+        print(json.dumps(data, indent=2))
+    else:
+        for i, r in enumerate(run_result.history, 1):
+            _print_step_result(r, as_json=False)
+        print()
+        if run_result.status == "done":
+            print(f"Done: {run_result.summary}")
+        else:
+            print(f"Escalated: {run_result.escalation_reason}", file=sys.stderr)
+
+
 def _add_common_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--token", default=None, help="Bearer token (env: CLI_CONTROLLER_TOKEN)")
     p.add_argument("--base-url", default=None, dest="base_url", help="Gateway URL (env: CLI_CONTROLLER_URL)")
@@ -72,21 +102,20 @@ def main(argv: list[str] | None = None) -> None:
     p_prov = sub.add_parser("providers", help="List gateway provider statuses")
     _add_common_args(p_prov)
 
-    # clio step
-    p_step = sub.add_parser("step", help="Run a single step against one model")
+    # clio run  (StaticPlanner from JSON plan file)
+    p_run = sub.add_parser("run", help="Run a plan via StaticPlanner (plan.json)")
+    _add_common_args(p_run)
+    p_run.add_argument("--workspace", default=".", help="Workspace directory")
+    p_run.add_argument("--plan", required=True, help="JSON file: list of {model, prompt}")
+
+    # clio step  (single step, no loop)
+    p_step = sub.add_parser("step", help="Execute exactly one step against one model")
     _add_common_args(p_step)
     p_step.add_argument("--model", required=True, help="Provider model name")
     p_step.add_argument("--workspace", default=".", help="Workspace directory")
     p_step.add_argument("--prompt", required=True, help="Task prompt")
-    p_step.add_argument("--timeout", type=int, default=None, help="Override CLI timeout (s)")
 
-    # clio plan
-    p_plan = sub.add_parser("plan", help="Run a plan from JSON file")
-    _add_common_args(p_plan)
-    p_plan.add_argument("--workspace", default=".", help="Workspace directory")
-    p_plan.add_argument("--file", required=True, help="JSON file: list of {model, prompt}")
-
-    # clio review
+    # clio review  (same prompt to multiple models)
     p_rev = sub.add_parser("review", help="Cross-check: same prompt to multiple models")
     _add_common_args(p_rev)
     p_rev.add_argument("--models", required=True, help="Comma-separated model names")
@@ -95,12 +124,8 @@ def main(argv: list[str] | None = None) -> None:
 
     args = parser.parse_args(argv)
 
-    config = load_config(
-        base_url=args.base_url,
-        token=args.token,
-    )
+    config = load_config(base_url=args.base_url, token=args.token)
     as_json = args.json
-
     exit_code = 0
 
     if args.command == "providers":
@@ -113,33 +138,33 @@ def main(argv: list[str] | None = None) -> None:
             print(f"Error: {exc}", file=sys.stderr)
             exit_code = 1
 
+    elif args.command == "run":
+        plan_path = Path(args.plan)
+        if not plan_path.exists():
+            print(f"Error: plan file not found: {args.plan}", file=sys.stderr)
+            sys.exit(1)
+        raw_steps = json.loads(plan_path.read_text())
+        steps = [Step(model=s["model"], prompt=s["prompt"]) for s in raw_steps]
+        planner = StaticPlanner(steps)
+        orch = Orchestrator(args.workspace, config)
+        result = orch.run(planner)
+        _print_run_result(result, as_json=as_json)
+        if result.status == "escalated":
+            exit_code = 1
+
     elif args.command == "step":
         orch = Orchestrator(args.workspace, config)
         result = orch.run_step(args.model, args.prompt)
-        _print_result(result, as_json=as_json)
-        if result.error or result.footer.status in ("blocked",):
+        _print_step_result(result, as_json=as_json)
+        if result.error or result.footer.status == "blocked":
             exit_code = 1
-
-    elif args.command == "plan":
-        plan_path = Path(args.file)
-        if not plan_path.exists():
-            print(f"Error: plan file not found: {args.file}", file=sys.stderr)
-            sys.exit(1)
-        raw_steps = json.loads(plan_path.read_text())
-        steps = [PlanStep(model=s["model"], prompt=s["prompt"]) for s in raw_steps]
-        orch = Orchestrator(args.workspace, config)
-        results = orch.run_plan(steps)
-        for r in results:
-            _print_result(r, as_json=as_json)
-            if r.error or r.footer.status in ("blocked",):
-                exit_code = 1
 
     elif args.command == "review":
         models = [m.strip() for m in args.models.split(",") if m.strip()]
         orch = Orchestrator(args.workspace, config)
         results = orch.run_step_multi(models, args.prompt)
         for r in results:
-            _print_result(r, as_json=as_json)
+            _print_step_result(r, as_json=as_json)
             if r.error:
                 exit_code = 1
 

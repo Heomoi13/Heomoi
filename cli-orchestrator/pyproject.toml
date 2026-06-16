@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cli-orchestrator"
+version = "0.1.0"
+description = "Deterministic orchestration engine for KJCLIController gateway"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+cli-orchestrator = "cli_orchestrator.cli:main"
+clio = "cli_orchestrator.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["cli_orchestrator*"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]

@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import sys
 from pathlib import Path
 
 from .config import load_config
 from .orchestrator import Orchestrator
 from .planner import StaticPlanner, Step
+from .gateway import GatewayError, get_providers
 from .providers import check_providers
 
 
@@ -88,6 +90,52 @@ def _print_run_result(run_result, *, as_json: bool) -> None:
             print(f"Escalated: {run_result.escalation_reason}", file=sys.stderr)
 
 
+def _cmd_status(config, *, as_json: bool) -> int:
+    """Check every component and report pass/fail. Exit 0 only when fully operational."""
+    checks: list[dict] = []
+
+    def _chk(name: str, ok: bool, detail: str = "") -> None:
+        checks.append({"name": name, "ok": ok, "detail": detail})
+
+    # 1. Token
+    _chk("token_configured", bool(config.token),
+         "set" if config.token else "CLI_CONTROLLER_TOKEN not set")
+
+    # 2. Gateway + providers
+    try:
+        raw = get_providers(config)
+        _chk("gateway_reachable", True, config.base_url)
+        for p in raw:
+            _chk(f"provider_{p['name']}", bool(p.get("available")),
+                 "available" if p.get("available") else "not available — check auth or binary")
+    except (GatewayError, Exception) as exc:
+        _chk("gateway_reachable", False, str(exc))
+
+    # 3. CLI binaries in PATH
+    for binary in ("claude", "agy", "codex"):
+        found = shutil.which(binary)
+        _chk(f"binary_{binary}", found is not None,
+             found if found else "not found in PATH")
+
+    all_ok = all(c["ok"] for c in checks)
+
+    if as_json:
+        print(json.dumps({"ok": all_ok, "checks": checks}, indent=2))
+    else:
+        w = max(len(c["name"]) for c in checks)
+        for c in checks:
+            mark = "✓" if c["ok"] else "✗"
+            print(f"  {mark}  {c['name']:<{w}}  {c['detail']}")
+        print()
+        if all_ok:
+            print("Status: READY")
+        else:
+            failed = [c["name"] for c in checks if not c["ok"]]
+            print(f"Status: NOT READY — {', '.join(failed)}", file=sys.stderr)
+
+    return 0 if all_ok else 1
+
+
 def _add_common_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--token", default=None, help="Bearer token (env: CLI_CONTROLLER_TOKEN)")
     p.add_argument("--base-url", default=None, dest="base_url", help="Gateway URL (env: CLI_CONTROLLER_URL)")
@@ -97,6 +145,10 @@ def _add_common_args(p: argparse.ArgumentParser) -> None:
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="clio", description="cli-orchestrator")
     sub = parser.add_subparsers(dest="command", required=True)
+
+    # clio status
+    p_st = sub.add_parser("status", help="Health-check: token, gateway, providers, CLI binaries")
+    _add_common_args(p_st)
 
     # clio providers
     p_prov = sub.add_parser("providers", help="List gateway provider statuses")
@@ -128,7 +180,10 @@ def main(argv: list[str] | None = None) -> None:
     as_json = args.json
     exit_code = 0
 
-    if args.command == "providers":
+    if args.command == "status":
+        exit_code = _cmd_status(config, as_json=as_json)
+
+    elif args.command == "providers":
         try:
             statuses = check_providers(config)
             _print_providers(statuses, as_json=as_json)

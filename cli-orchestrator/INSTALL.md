@@ -3,6 +3,8 @@
 > **Dành cho agent:** Đọc toàn bộ file này trước. Phân biệt rõ hai loại bước:
 > - ✅ **Tự động** — chạy lệnh trực tiếp được
 > - 🔑 **Cần người** — yêu cầu tương tác OAuth/browser, không script được
+>
+> **Không có `kjcli-controller`?** Dùng `scripts/dev_gateway.py` (xem [Bước 0](#bước-0--dev-gateway-nếu-chưa-có-kjcli-controller-)).
 
 ---
 
@@ -14,6 +16,59 @@
 | Python | 3.11+ | `python3 --version` |
 | Node.js | 18+ | `node --version` |
 | KJCLIController gateway | đang chạy trên server | `curl http://127.0.0.1:8080/api/providers` |
+
+---
+
+## Bước 0 — Dev gateway (nếu chưa có `kjcli-controller`) ✅
+
+Nếu bạn chưa có binary `kjcli-controller`, dùng `scripts/dev_gateway.py` —
+một gateway tối giản viết bằng Python stdlib, đủ để `clio` chạy hoàn toàn.
+
+```bash
+# Sinh token dev
+export CLI_CONTROLLER_TOKEN=$(openssl rand -hex 16)
+echo "Dev token: $CLI_CONTROLLER_TOKEN"
+
+# Chạy dev gateway (terminal riêng hoặc background)
+python3 scripts/dev_gateway.py
+# → dev_gateway starting on http://127.0.0.1:8080
+# → ✓ claude   → claude
+# → ✗ gemini   → agy (not found in PATH)
+# → ✓ openai   → codex
+```
+
+### Tuning lệnh CLI (nếu flag khác mặc định)
+
+```bash
+# Mặc định dev_gateway dùng: claude -p "<prompt>"
+# Nếu Claude CLI của bạn dùng flag khác:
+export CLIO_CLAUDE_CMD="claude --print {prompt}"
+
+# Gemini / agy — mặc định pipe stdin
+export CLIO_GEMINI_CMD="agy"
+
+# OpenAI Codex — mặc định pipe stdin
+export CLIO_OPENAI_CMD="codex -q"
+
+python3 scripts/dev_gateway.py
+```
+
+### Chạy dev gateway như background process ✅
+
+```bash
+nohup python3 scripts/dev_gateway.py > /tmp/dev-gateway.log 2>&1 &
+echo "Gateway PID: $!"
+
+# Kiểm tra
+clio providers
+
+# Dừng khi xong
+kill %1   # hoặc kill <PID>
+```
+
+> **Giới hạn của dev_gateway vs. kjcli-controller thật:**
+> single-threaded, không streaming, không retry nâng cao.
+> Đủ cho dev/test; thay bằng kjcli-controller khi production.
 
 ---
 

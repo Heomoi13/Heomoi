@@ -1,7 +1,16 @@
 #!/usr/bin/env bash
 # setup.sh — Install cli-orchestrator and its dependencies on Ubuntu server.
 # Run as the user who will own the process (NOT root).
-# Usage: bash scripts/setup.sh [--venv-dir <path>] [--skip-node] [--skip-clis]
+#
+# Usage:
+#   bash scripts/setup.sh [options]
+#
+# Options:
+#   --venv-dir <path>     Virtualenv location (default: ~/.venv/clio)
+#   --skip-node           Skip Node.js installation
+#   --skip-clis           Skip AI CLI installation (claude/gemini/codex)
+#   --build-gateway       Clone and build KJCLIController from source
+#   --gateway-dir <path>  Where to clone KJCLIController (default: ~/KJCLIController)
 
 set -euo pipefail
 
@@ -17,12 +26,16 @@ section() { echo -e "\n${CYAN}══ $* ══${NC}"; }
 VENV_DIR="${VENV_DIR:-$HOME/.venv/clio}"
 SKIP_NODE=false
 SKIP_CLIS=false
+BUILD_GATEWAY=false
+GATEWAY_DIR="${GATEWAY_DIR:-$HOME/KJCLIController}"
 
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --venv-dir)   VENV_DIR="$2"; shift 2 ;;
-    --skip-node)  SKIP_NODE=true; shift ;;
-    --skip-clis)  SKIP_CLIS=true; shift ;;
+    --venv-dir)      VENV_DIR="$2"; shift 2 ;;
+    --skip-node)     SKIP_NODE=true; shift ;;
+    --skip-clis)     SKIP_CLIS=true; shift ;;
+    --build-gateway) BUILD_GATEWAY=true; shift ;;
+    --gateway-dir)   GATEWAY_DIR="$2"; shift 2 ;;
     *) error "Unknown argument: $1"; exit 1 ;;
   esac
 done
@@ -156,6 +169,115 @@ else
     info "Installing OpenAI Codex CLI..."
     npm install -g @openai/codex 2>/dev/null || warn "codex install failed (optional, skip if not used)"
   fi
+fi
+
+# ═════════════════════════════════════════════════════════════════════════════
+section "Step 5b — KJCLIController gateway (--build-gateway)"
+# ═════════════════════════════════════════════════════════════════════════════
+
+if [[ "$BUILD_GATEWAY" == true ]]; then
+  KJCLI_REPO="https://github.com/kentjuno/KJCLIController.git"
+  BIN_DIR="$HOME/bin"
+  GATEWAY_RUN_DIR="$HOME/kjcli-gateway"
+
+  # Ensure Rust is available
+  if ! command -v cargo &>/dev/null; then
+    info "Rust not found — installing via rustup..."
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
+    # shellcheck disable=SC1091
+    source "$HOME/.cargo/env"
+    success "Rust $(rustc --version) installed"
+  else
+    success "Rust already installed: $(rustc --version)"
+  fi
+
+  # Install build dependencies
+  if command -v apt-get &>/dev/null; then
+    info "Installing build dependencies..."
+    sudo apt-get install -y build-essential pkg-config libssl-dev --quiet
+  fi
+
+  # Clone or update repo
+  if [[ -d "$GATEWAY_DIR/.git" ]]; then
+    info "Updating existing KJCLIController repo at $GATEWAY_DIR ..."
+    git -C "$GATEWAY_DIR" pull --quiet
+  else
+    info "Cloning KJCLIController into $GATEWAY_DIR ..."
+    git clone "$KJCLI_REPO" "$GATEWAY_DIR" --quiet
+  fi
+
+  # Build
+  info "Building (cargo build --release) — may take a few minutes..."
+  # shellcheck disable=SC1091
+  source "$HOME/.cargo/env" 2>/dev/null || true
+  cargo build --release --manifest-path "$GATEWAY_DIR/Cargo.toml" \
+      2>&1 | tail -5
+
+  BUILT_BIN="$GATEWAY_DIR/target/release/clicontroller"
+  if [[ ! -f "$BUILT_BIN" ]]; then
+    error "Build failed — binary not found at $BUILT_BIN"
+    exit 1
+  fi
+
+  mkdir -p "$BIN_DIR"
+  cp "$BUILT_BIN" "$BIN_DIR/clicontroller"
+  chmod +x "$BIN_DIR/clicontroller"
+  success "clicontroller installed at $BIN_DIR/clicontroller"
+
+  # Ensure ~/bin is in PATH
+  if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
+    warn "$BIN_DIR not in PATH. Adding to ~/.bashrc"
+    echo "export PATH=\"\$HOME/bin:\$PATH\"" >> "$HOME/.bashrc"
+    export PATH="$BIN_DIR:$PATH"
+  fi
+
+  # Set up gateway run directory + config.json
+  mkdir -p "$GATEWAY_RUN_DIR" "$GATEWAY_RUN_DIR/temp_uploads" "$GATEWAY_RUN_DIR/outputs"
+
+  if [[ ! -f "$GATEWAY_RUN_DIR/config.json" ]]; then
+    GATEWAY_TOKEN=$(openssl rand -hex 32)
+    cat > "$GATEWAY_RUN_DIR/config.json" <<JSON
+{
+  "token": "$GATEWAY_TOKEN",
+  "port": 8080,
+  "temp_dir": "./temp_uploads",
+  "output_dir": "./outputs"
+}
+JSON
+    chmod 600 "$GATEWAY_RUN_DIR/config.json"
+    success "config.json created at $GATEWAY_RUN_DIR/config.json"
+    warn "Gateway token: $GATEWAY_TOKEN"
+    warn "Add to ~/.bashrc: export CLI_CONTROLLER_TOKEN=\"$GATEWAY_TOKEN\""
+  else
+    success "config.json already exists at $GATEWAY_RUN_DIR/config.json"
+    GATEWAY_TOKEN=$(python3 -c "import json; print(json.load(open('$GATEWAY_RUN_DIR/config.json'))['token'])" 2>/dev/null || echo "")
+  fi
+
+  # Write systemd unit for gateway
+  SYSTEMD_DIR="$HOME/.config/systemd/user"
+  mkdir -p "$SYSTEMD_DIR"
+  cat > "$SYSTEMD_DIR/kjcli-gateway.service" <<UNIT
+[Unit]
+Description=KJCLIController gateway
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=$GATEWAY_RUN_DIR
+ExecStart=$BIN_DIR/clicontroller
+Restart=on-failure
+RestartSec=5
+Environment=HOME=$HOME
+Environment=PATH=$BIN_DIR:$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin
+
+[Install]
+WantedBy=default.target
+UNIT
+
+  success "Systemd unit written: $SYSTEMD_DIR/kjcli-gateway.service"
+  info "To start: systemctl --user daemon-reload && systemctl --user enable --now kjcli-gateway"
+else
+  warn "Skipping gateway build (pass --build-gateway to build KJCLIController from source)"
 fi
 
 # ═════════════════════════════════════════════════════════════════════════════

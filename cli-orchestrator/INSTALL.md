@@ -127,37 +127,114 @@ source ~/.bashrc
 
 ---
 
-## Bước 3 — Chạy KJCLIController gateway ✅
+## Bước 3 — Cài KJCLIController gateway ✅
 
-Gateway bind `127.0.0.1` (không bao giờ expose ra internet).
+Gateway là Rust binary tên **`clicontroller`**, repo: https://github.com/kentjuno/KJCLIController
+
+### Option A: Download pre-built binary (nhanh nhất)
 
 ```bash
-# Chạy thủ công để test
-./kjcli-controller --bind 127.0.0.1:8080 --token "$CLI_CONTROLLER_TOKEN"
+# Xem danh sách release tại:
+# https://github.com/kentjuno/KJCLIController/releases/latest
+# Tải file Linux (thường tên: clicontroller-linux-x86_64 hoặc tương tự)
 
-# Kiểm tra gateway đang chạy
-curl -s http://127.0.0.1:8080/api/providers
+# Ví dụ (thay URL bằng link thật từ releases page):
+mkdir -p ~/bin
+curl -L -o ~/bin/clicontroller \
+    https://github.com/kentjuno/KJCLIController/releases/latest/download/clicontroller-linux-x86_64
+chmod +x ~/bin/clicontroller
+export PATH="$HOME/bin:$PATH"
+
+# Kiểm tra
+clicontroller --version
+```
+
+### Option B: Build từ source với Cargo ✅
+
+```bash
+# 1. Cài Rust (nếu chưa có)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+source "$HOME/.cargo/env"
+
+# 2. Clone và build (mất ~2-5 phút lần đầu)
+git clone https://github.com/kentjuno/KJCLIController.git ~/KJCLIController
+cd ~/KJCLIController
+cargo build --release
+
+# 3. Copy binary vào PATH
+mkdir -p ~/bin
+cp target/release/clicontroller ~/bin/
+export PATH="$HOME/bin:$PATH"
+echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc
+
+# Kiểm tra
+clicontroller --version 2>/dev/null || echo "Binary tại: ~/bin/clicontroller"
+```
+
+### Cấu hình gateway (config.json)
+
+KJCLIController **tự sinh `config.json` khi chạy lần đầu**. Quy trình:
+
+```bash
+# 1. Tạo thư mục riêng để chạy gateway
+mkdir -p ~/kjcli-gateway && cd ~/kjcli-gateway
+
+# 2. Chạy một lần để sinh config.json
+clicontroller
+# Ctrl+C ngay sau khi thấy "Listening on ..."
+
+# 3. Chỉnh config.json — ĐẶT TOKEN MẠNH
+cat > config.json <<EOF
+{
+  "token": "$(openssl rand -hex 32)",
+  "port": 8080,
+  "temp_dir": "./temp_uploads",
+  "output_dir": "./outputs"
+}
+EOF
+
+# Lưu token vào env
+TOKEN=$(python3 -c "import json; print(json.load(open('config.json'))['token'])")
+echo "export CLI_CONTROLLER_TOKEN=\"$TOKEN\""   >> ~/.bashrc
+echo "export CLI_CONTROLLER_URL=\"http://127.0.0.1:8080\"" >> ~/.bashrc
+source ~/.bashrc
+
+# 4. Chạy gateway (từ thư mục chứa config.json)
+nohup clicontroller > ~/kjcli-gateway/gateway.log 2>&1 &
+echo "Gateway PID: $! — log: ~/kjcli-gateway/gateway.log"
+
+# 5. Kiểm tra
+curl -s -H "Authorization: Bearer $CLI_CONTROLLER_TOKEN" \
+    http://127.0.0.1:8080/api/providers
 ```
 
 ### Cài gateway thành systemd service (tự khởi động lại) ✅
 
 ```bash
-# Lưu token vào file bảo mật
-mkdir -p ~/.config/kjcli
-echo -n "$CLI_CONTROLLER_TOKEN" > ~/.config/kjcli/token
-chmod 600 ~/.config/kjcli/token
+mkdir -p ~/.config/systemd/user
+cat > ~/.config/systemd/user/kjcli-gateway.service <<EOF
+[Unit]
+Description=KJCLIController gateway
+After=network.target
 
-# Chỉnh đường dẫn binary trong unit file (đã được setup.sh tạo)
-GATEWAY_BIN="$(which kjcli-controller)"   # hoặc đường dẫn tuyệt đối
-sed -i "s|%h/bin/kjcli-controller|$GATEWAY_BIN|g" \
-    ~/.config/systemd/user/kjcli-gateway.service
+[Service]
+Type=simple
+WorkingDirectory=$HOME/kjcli-gateway
+ExecStart=$HOME/bin/clicontroller
+Restart=on-failure
+RestartSec=5
+Environment=HOME=$HOME
+Environment=PATH=$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin
 
-# Enable và start
+[Install]
+WantedBy=default.target
+EOF
+
 systemctl --user daemon-reload
 systemctl --user enable --now kjcli-gateway
 systemctl --user status kjcli-gateway
 
-# Cho phép chạy khi không có session đăng nhập (linger)
+# Cho phép chạy khi không login (linger)
 sudo loginctl enable-linger "$USER"
 ```
 
@@ -300,13 +377,41 @@ crontab -e
 # Kiểm tra gateway có đang chạy không
 systemctl --user status kjcli-gateway
 # hoặc
-ps aux | grep kjcli-controller
+ps aux | grep clicontroller
 
 # Kiểm tra port
 ss -tlnp | grep 8080
 
+# Xem log gateway
+journalctl --user -u kjcli-gateway -n 50
+# hoặc nếu chạy bằng nohup:
+tail -f ~/kjcli-gateway/gateway.log
+
 # Restart
 systemctl --user restart kjcli-gateway
+```
+
+### Token không khớp (401 Unauthorized)
+```bash
+# Đảm bảo token trong env khớp với config.json
+echo $CLI_CONTROLLER_TOKEN
+cat ~/kjcli-gateway/config.json | python3 -c "import json,sys; print(json.load(sys.stdin)['token'])"
+# Hai giá trị phải giống nhau
+```
+
+### `clicontroller: command not found`
+```bash
+# Kiểm tra binary
+ls -la ~/bin/clicontroller
+export PATH="$HOME/bin:$PATH"
+# Thêm vào ~/.bashrc nếu chưa có:
+echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc
+```
+
+### Cargo build lỗi (linker / OpenSSL)
+```bash
+sudo apt install -y build-essential pkg-config libssl-dev
+cargo build --release
 ```
 
 ### `clio providers` hiện provider `available: false`
@@ -344,15 +449,20 @@ pip install -e .
 ## Cấu trúc file sau khi cài
 
 ```
-~/.venv/clio/             # virtualenv
-~/.local/bin/agy          # symlink → gemini
-~/.config/kjcli/token     # gateway token (chmod 600)
+~/bin/clicontroller                       # KJCLIController binary
+~/KJCLIController/                        # source (nếu build từ source)
+~/kjcli-gateway/
+│   config.json                           # gateway config (token, port)
+│   gateway.log                           # log nếu dùng nohup
 ~/.config/systemd/user/kjcli-gateway.service
+~/.venv/clio/                             # virtualenv cho clio
+~/.local/bin/agy                          # symlink → gemini
 ~/Heomoi/cli-orchestrator/
 ├── scripts/
-│   ├── setup.sh          # script cài đặt tự động
-│   └── _env_snippet.sh   # env vars (do setup.sh sinh ra)
-└── AGENT_LOG.md          # ledger (tạo khi chạy lần đầu, tại workspace)
+│   ├── setup.sh                          # cài clio + AI CLIs
+│   ├── dev_gateway.py                    # dev gateway (không cần Rust)
+│   └── _env_snippet.sh                   # env vars (do setup.sh sinh ra)
+└── <workspace>/AGENT_LOG.md             # ledger (tạo khi chạy lần đầu)
 ```
 
 ---
@@ -361,9 +471,11 @@ pip install -e .
 
 | Bước | Tự động? | Lệnh chính |
 |------|----------|-----------|
-| Cài Python deps + clio | ✅ | `bash scripts/setup.sh` |
-| Cấu hình token | ✅ | `echo export ... >> ~/.bashrc` |
+| Cài Rust | ✅ | `curl ... rustup.rs \| sh` |
+| Build gateway | ✅ | `cargo build --release` (hoặc download binary) |
+| Cấu hình gateway | ✅ | sinh `config.json`, set `CLI_CONTROLLER_TOKEN` |
 | Chạy gateway | ✅ | `systemctl --user enable --now kjcli-gateway` |
+| Cài Python deps + clio | ✅ | `bash scripts/setup.sh` |
 | Auth claude | 🔑 | `claude auth` (cần browser 1 lần) |
 | Auth gemini | 🔑 | `gemini auth` (cần browser 1 lần) |
 | Auth codex | ✅ hoặc 🔑 | `export OPENAI_API_KEY=...` hoặc `codex auth` |

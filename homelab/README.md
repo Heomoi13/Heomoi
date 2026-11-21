@@ -189,7 +189,7 @@ phần chênh lệch (vài phút thay vì 5–6 giờ trong lúc dừng dịch v
 Dùng NFS thay SMB vì NFS giữ đúng chủ sở hữu/quyền file Linux mà container cần.
 
 **1.1 👤 Trên UGOS** (tên menu có thể khác đôi chút theo phiên bản):
-- Bảng điều khiển → Dịch vụ file → **bật NFS** (bật NFSv4.1 nếu có lựa chọn).
+- Bảng điều khiển → Dịch vụ file → **bật NFS**. Kế hoạch dùng **NFSv3** (UGOS không export pseudo-root cho NFSv4).
 - Thư mục chia sẻ `data` → Quyền NFS → thêm quy tắc:
   máy khách `192.168.0.88` · đọc/ghi · **squash: không ánh xạ (no mapping / no_root_squash)** · đồng bộ (sync).
 - Bật SSH (nếu chưa bật lâu dài).
@@ -203,7 +203,8 @@ showmount -e 192.168.1.123            # xác nhận đường dẫn export, sử
 sudo /opt/homelab/bin/setup-nfs.sh test
 ```
 
-Đạt khi: ghi được, root đổi được chủ sở hữu file, tốc độ ~100+ MB/s. Nếu `vers=4.1` lỗi, thử `NFS_OPTS` với `vers=3`.
+Đạt khi: ghi được, root đổi được chủ sở hữu file, đọc ~110+ MB/s, ghi ~70+ MB/s (export dùng `sync` nên ghi chậm hơn đọc — đúng dự kiến).
+Kết quả thực tế 21/11/2026: ghi 75–78 MB/s, đọc 118 MB/s với `vers=3`.
 
 **1.3 🤖 Tạo automount + thư mục + sentinel**
 

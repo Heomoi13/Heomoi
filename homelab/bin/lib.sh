@@ -96,13 +96,17 @@ take_lock() {
   flock -n "$LOCK_FD" || die "Đang có một tiến trình '$name' khác chạy."
 }
 
+# Đúng cả khi có automount: findmnt chỉ thấy lớp autofs bọc ngoài, còn `stat -f` thấy lớp NFS thật
+# (ls kích hoạt automount trước). Có timeout vì mount NFS kiểu `hard` sẽ treo vô hạn khi NAS mất kết nối.
 is_nfs_mount() {
-  mountpoint -q "$1" 2>/dev/null && [[ $(findmnt -n -o FSTYPE "$1") == nfs* ]]
+  mountpoint -q "$1" 2>/dev/null || return 1
+  timeout 15 ls "$1" >/dev/null 2>&1 || return 1
+  [[ $(timeout 15 stat -f -c %T "$1" 2>/dev/null) == nfs* ]]
 }
 
 # Dữ liệu gốc đã nằm trên NAS (sau cutover)?
 primary_on_nas() {
-  is_nfs_mount "$PRIMARY" && [[ -f $PRIMARY/$SENTINEL ]]
+  is_nfs_mount "$PRIMARY" && timeout 15 test -f "$PRIMARY/$SENTINEL"
 }
 
 nas_ssh() {
@@ -162,7 +166,6 @@ nas_wake() {
 # Kích hoạt automount và kiểm tra thư mục đích trên NAS có sentinel.
 nas_dest_ready() {
   local dest="$NAS_MOUNT/$NAS_HOMELAB_SUBDIR"
-  ls "$NAS_MOUNT" >/dev/null 2>&1 || return 1
   is_nfs_mount "$NAS_MOUNT" || return 1
   [[ -f $dest/$SENTINEL ]]
 }

@@ -52,6 +52,18 @@
 6. Khi một script báo **KHÔNG ĐẠT** hoặc lỗi: **dừng lại và báo cáo**, không tự sáng tạo cách khác.
 7. Không chạy các bước dừng dịch vụ (cutover, thay ổ) trong khung **01:30–05:30** (lịch backup) trừ khi chủ nhà yêu cầu.
 8. Sau mỗi giai đoạn, ghi một báo cáo ngắn: đã làm gì, kết quả kiểm tra, bất thường. Log nằm ở `/var/log/homelab/`.
+9. **Quyền root của Hermes chỉ qua một cổng:** `sudo /opt/homelab/bin/homelab-ops.sh <lệnh>`. Script này do root sở hữu,
+   chỉ có lệnh kiểm tra và bật timer có tên cố định. Không lưu mật khẩu sudo trong file, không xin `NOPASSWD`
+   cho `rsync`, `systemctl`, `bash`, `cp`, trình soạn thảo hay script nằm trong thư mục mà `namdo` sửa được
+   (mỗi thứ đó đều tương đương toàn quyền root). Lệnh thay đổi lớn (`cutover.sh switch/rollback`,
+   `prepare-backup-disk.sh`, `restic-init.sh`, `install.sh`, sửa `/etc`) → Hermes soạn sẵn lệnh, **chủ nhà tự chạy**.
+
+   Chủ nhà cấp một lần:
+
+   ```bash
+   echo 'namdo ALL=(root) NOPASSWD: /opt/homelab/bin/homelab-ops.sh' | sudo tee /etc/sudoers.d/homelab-hermes
+   sudo chmod 440 /etc/sudoers.d/homelab-hermes && sudo visudo -c
+   ```
 
 ## 3. Cấu trúc thư mục
 

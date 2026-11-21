@@ -23,4 +23,4 @@ systemctl daemon-reload
 
 echo "Đã cài vào /opt/homelab và /etc/systemd/system."
 echo "Chưa bật timer nào. Tiếp theo: điền /etc/homelab/homelab.env và secrets.env, rồi làm theo README."
-grep -n CHANGE_ME /etc/homelab/homelab.env || true
+grep -nE '^[A-Z_]+=.*CHANGE_ME' /etc/homelab/homelab.env || echo "Không còn giá trị CHANGE_ME nào."

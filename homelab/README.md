@@ -33,7 +33,9 @@
 
 **Điều chỉnh sau khảo sát (cổng 0, 21/11/2026):**
 - Server **không có SSD**: ổ hệ thống là SSD SATA Crucial BX500. Mọi chỗ ghi "SSD" là ổ này; `/srv/fast` là thư mục trên nó.
-- Ảnh gốc Immich nằm ở `~/immich/library` trên SSD, không phải `/srv/nas` → thêm **bước 4.0** đưa nó vào `/srv/nas` trước cutover.
+- Ảnh gốc Immich tải lên nằm ở `~/immich/library` trên SSD, không phải `/srv/nas` → thêm **bước 4.0** đưa nó vào `/srv/nas` trước cutover.
+  Video transcode (`/srv/nas/share/immich-encoded`, 145 GB) và thư viện ngoài (`/srv/nas/share/photos`, 490 GB) đã ở `/srv/nas`.
+- Share `[timemachine]` (`/srv/nas/timemachine`) chưa từng dùng (16 KB).
 - Syncthing và Calibre **không dùng `/srv/nas`** (dữ liệu ở `~/LLM_Vault`, `~/cwa`). Chúng ở lại SSD và được restic backup hằng đêm.
   Calibre dùng SQLite nên ở SSD là đúng.
 - Không có Home Assistant trên server.
@@ -328,35 +330,46 @@ Immich sẽ tự từ chối khởi động vì không thấy file `.immich`.
 **4.0 🤖 Đưa ảnh gốc Immich từ SSD vào `/srv/nas`** (làm trên HDD trước, cutover sẽ đưa lên NAS cùng mọi thứ khác).
 
 Vì sao: ảnh tải lên từ điện thoại hiện chỉ nằm trên một SSD giá rẻ — đúng loại rủi ro mà kế hoạch này muốn loại bỏ.
-Thumbnail và video encode **ở lại SSD** (tạo lại được, cần đọc nhanh). Đường dẫn bên trong container không đổi,
-nên database Immich không phải sửa gì.
+Đường dẫn bên trong container không đổi, nên database Immich không phải sửa gì.
+
+Bố cục Immich hiện tại (theo GĐ0) và sau bước này:
+
+| Trong container | Hiện tại (host) | Sau 4.0 (host) | Ghi chú |
+|---|---|---|---|
+| `/data` (library, upload, profile, backups) | `~/immich/library` — **SSD** | `/srv/nas/immich` | ảnh gốc → NAS |
+| `/data/thumbs` | `~/immich/library/thumbs` — SSD | **giữ** `~/immich/library/thumbs` | mount riêng qua override, cần đọc nhanh |
+| `/data/encoded-video` | `/srv/nas/share/immich-encoded` — HDD | **không đổi** | mount riêng có sẵn; lên NAS cùng cutover, không backup |
+| `/mnt/photos` (thư viện ngoài) | `/srv/nas/share/photos` | **không đổi** | 490 GB ảnh gốc cũ; lên NAS cùng cutover |
 
 ```bash
 cd /home/namdo/immich
-docker inspect immich_server -f '{{range .Mounts}}{{.Source}} -> {{.Destination}}{{"\n"}}{{end}}'   # ghi lại đích của UPLOAD_LOCATION (/data hoặc /usr/src/app/upload)
-ls -la library/                                       # các thư mục con: library upload profile backups thumbs encoded-video (+ file .immich)
-du -sh library/*
-sudo /opt/homelab/bin/db-dump.sh                      # dump phòng thân
-cp .env .env.bak-$(date +%F)
+docker inspect immich_server -f '{{range .Mounts}}{{.Source}} -> {{.Destination}}{{"\n"}}{{end}}'   # xác nhận đúng bảng trên
+ls -la library/ && du -sh library/*                    # library upload profile backups thumbs (+ file .immich)
+grep -n "encoded-video\|/mnt/photos\|UPLOAD_LOCATION" docker-compose*.yml .env   # mount có sẵn khai báo ở đâu
+sudo /opt/homelab/bin/db-dump.sh                       # dump phòng thân
+cp .env .env.bak-$(date +%F); cp docker-compose.yml docker-compose.yml.bak-$(date +%F)
 docker compose down
 
 sudo mkdir -p /srv/nas/immich
 sudo rsync -aH --numeric-ids --info=progress2 --exclude=/thumbs --exclude=/encoded-video library/ /srv/nas/immich/
 sudo rsync -aHn --numeric-ids -i --checksum --exclude=/thumbs --exclude=/encoded-video library/ /srv/nas/immich/ | wc -l   # phải = 0
-sudo mkdir -p /srv/nas/immich/thumbs /srv/nas/immich/encoded-video   # điểm mount rỗng
+sudo mkdir -p /srv/nas/immich/thumbs /srv/nas/immich/encoded-video   # điểm mount rỗng cho 2 mount riêng
 ```
 
-Sửa `.env`: `UPLOAD_LOCATION=/srv/nas/immich`. Tạo `docker-compose.override.yml` từ
-`homelab/compose/immich/docker-compose.override.yml.example` (sửa `/data` nếu đích khác; gộp nếu đã có override) để
-`thumbs` và `encoded-video` vẫn trỏ về `/home/namdo/immich/library/...` trên SSD.
+Sửa `.env`: `UPLOAD_LOCATION=/srv/nas/immich`. Thêm **chỉ dòng thumbs** từ
+`homelab/compose/immich/docker-compose.override.yml.example` vào chỗ đang khai báo mount `encoded-video`
+(cùng file compose/override đó). **Không** thêm dòng `encoded-video` thứ hai — trùng đích mount thì compose báo lỗi.
 
 ```bash
-docker compose up -d && docker compose logs -f immich-server   # không có lỗi ".immich" / "mount"
+docker compose config | grep -A12 'immich-server:' | grep -E 'source|target'   # đúng 4 mount như bảng
+docker compose up -d && docker compose logs -f immich-server                   # không có lỗi ".immich" / "mount"
 ```
 
-👤 Mở Immich: xem ảnh cũ (ảnh gốc, không chỉ thumbnail), tải lên 1 ảnh mới, kiểm tra file mới xuất hiện trong `/srv/nas/immich/upload/`.
+👤 Mở Immich: xem ảnh cũ (ảnh gốc, không chỉ thumbnail), xem 1 video, tải lên 1 ảnh mới,
+kiểm tra file mới xuất hiện trong `/srv/nas/immich/upload/`.
 Giữ `~/immich/library/{library,upload,profile}` cũ trên SSD đến hết GĐ4 + 14 ngày rồi mới xoá (⛔ hỏi chủ nhà).
-Cập nhật `homelab.env`: `IMMICH_UPLOAD_HOST=/srv/nas/immich`.
+Cập nhật `homelab.env`: `IMMICH_UPLOAD_HOST=/srv/nas/immich`,
+`BACKUP_EXCLUDE_PATHS="/srv/nas/share/immich-encoded /srv/nas/immich/thumbs /srv/nas/immich/encoded-video"`.
 
 **4.1 (Không cần — GĐ0 xác nhận Postgres đã ở SSD.)** Giữ lại để tham khảo: database **không bao giờ** được nằm trên NFS:
 

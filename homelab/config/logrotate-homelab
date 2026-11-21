@@ -1,0 +1,7 @@
+/var/log/homelab/*.log {
+    weekly
+    rotate 12
+    compress
+    missingok
+    notifempty
+}

@@ -1,0 +1,6 @@
+lost+found
+[#]snapshot
+.snapshot
+@eaDir
+[#]recycle
+.@__thumb

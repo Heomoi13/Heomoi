@@ -1,0 +1,11 @@
+[Unit]
+Description=Homelab: diễn tập khôi phục
+Wants=network-online.target
+After=network-online.target remote-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/homelab/bin/restore-drill.sh local
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=infinity

@@ -1,0 +1,11 @@
+[Unit]
+Description=Homelab: giám sát RAID và SMART của NAS
+Wants=network-online.target
+After=network-online.target remote-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/homelab/bin/monitor.sh nas-health
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=infinity

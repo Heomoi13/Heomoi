@@ -1,0 +1,10 @@
+# /etc/nut/upsd.users — quyền 640, owner root:nut. Thay mật khẩu bằng chuỗi ngẫu nhiên:
+#   openssl rand -hex 16
+[upsmon_local]
+  password = CHANGE_ME_LOCAL
+  upsmon primary
+
+# Dùng cho NAS nếu bật MODE=netserver (UGOS/Synology thường mặc định monuser/secret).
+# [monuser]
+#   password = CHANGE_ME_NAS
+#   upsmon secondary

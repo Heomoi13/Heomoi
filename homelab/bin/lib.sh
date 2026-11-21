@@ -113,6 +113,28 @@ mac_ssh() {
   ssh -o BatchMode=yes -o ConnectTimeout=10 "${MAC_M2_USER}@${MAC_M2_HOST}" "$@"
 }
 
+# Ổ USB "Backup" trên Mac chỉ mount khi cần. Gọi mac_mount_disk, rồi trap mac_unmount_disk EXIT.
+MAC_MOUNTED_BY_US=0
+
+mac_mount_disk() {
+  mac_ssh true || die "Không SSH được vào Mac M2 ($MAC_M2_HOST)."
+  if mac_ssh "test -d '$MAC_M2_BACKUP_DIR'"; then
+    log "Ổ backup trên Mac đã được mount sẵn."
+    return 0
+  fi
+  [[ -n ${MAC_BACKUP_VOLUME:-} ]] || die "Ổ backup Mac chưa mount và MAC_BACKUP_VOLUME chưa cấu hình."
+  log "Mount ổ backup trên Mac ($MAC_BACKUP_VOLUME)"
+  mac_ssh "/usr/sbin/diskutil mount '$MAC_BACKUP_VOLUME'" >/dev/null || die "diskutil mount thất bại (ổ USB đã cắm chưa?)."
+  mac_ssh "test -d '$MAC_M2_BACKUP_DIR'" || die "Đã mount nhưng không thấy $MAC_M2_BACKUP_DIR."
+  MAC_MOUNTED_BY_US=1
+}
+
+mac_unmount_disk() {
+  ((MAC_MOUNTED_BY_US)) || return 0
+  mac_ssh "/usr/sbin/diskutil unmount '$MAC_BACKUP_VOLUME'" >/dev/null \
+    && log "Đã gỡ ổ backup trên Mac." || log "Cảnh báo: không gỡ được ổ backup trên Mac."
+}
+
 nas_port_open() {
   timeout 3 bash -c "</dev/tcp/${NAS_IP}/2049" 2>/dev/null
 }

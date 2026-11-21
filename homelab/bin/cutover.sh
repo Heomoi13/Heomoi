@@ -46,13 +46,33 @@ affected_containers() {
   done
 } 2>/dev/null
 
+# Dịch vụ host cũng giữ file trong PRIMARY (Samba share, cron job đọc dữ liệu) → dừng cùng lúc.
+SERVICES_FILE=$HOMELAB_STATE/cutover-services.txt
+stop_services() {
+  : >"$SERVICES_FILE"
+  local s
+  for s in ${CUTOVER_STOP_SERVICES:-}; do
+    if systemctl is-active --quiet "$s"; then
+      systemctl stop "$s" && echo "$s" >>"$SERVICES_FILE" && log "Đã dừng dịch vụ $s"
+    fi
+  done
+}
+
+start_services() {
+  [[ -s $SERVICES_FILE ]] || return 0
+  local s
+  while read -r s; do systemctl start "$s" && log "Đã chạy lại dịch vụ $s"; done <"$SERVICES_FILE"
+}
+
 stop_containers() {
+  stop_services
   affected_containers | sort -u >"$CONTAINERS_FILE"
   log "Dừng $(wc -l <"$CONTAINERS_FILE") container: $(tr '\n' ' ' <"$CONTAINERS_FILE")"
   [[ -s $CONTAINERS_FILE ]] && xargs -r docker stop -t 60 <"$CONTAINERS_FILE" >/dev/null
 }
 
 start_containers() {
+  start_services
   [[ -s $CONTAINERS_FILE ]] || return 0
   log "Khởi động lại: $(tr '\n' ' ' <"$CONTAINERS_FILE")"
   xargs -r docker start <"$CONTAINERS_FILE" >/dev/null || log "Một số container không khởi động được — kiểm tra docker ps -a"
@@ -111,6 +131,7 @@ preflight() {
   fi
   command -v chattr >/dev/null || { log "  ❌ Thiếu chattr"; fail=1; }
   log "  Container sẽ bị dừng khi switch: $(affected_containers | sort -u | tr '\n' ' ')"
+  log "  Dịch vụ host sẽ bị dừng: ${CUTOVER_STOP_SERVICES:-không có}"
   ((fail == 0)) && log "PREFLIGHT: ĐẠT" || log "PREFLIGHT: KHÔNG ĐẠT"
   return $fail
 }
@@ -170,7 +191,7 @@ switch() {
     start_containers
     die "Không gỡ được $PRIMARY (đang có tiến trình dùng). Đã chạy lại dịch vụ."
   fi
-  # Khoá thư mục rỗng: nếu NFS không mount, không gì ghi nhầm vào NVMe được
+  # Khoá thư mục rỗng: nếu NFS không mount, không gì ghi nhầm vào ổ hệ thống được
   chattr +i "$PRIMARY"
 
   # Sửa fstab: dòng HDD chuyển sang OLD_HDD_MOUNT, chỉ đọc, nofail; thêm dòng NFS
@@ -209,8 +230,7 @@ rollback() {
   primary_on_nas || die "$PRIMARY hiện không phải NFS — kiểm tra tay."
   tg_send "↩️ Đang rollback: đưa dữ liệu gốc về HDD server."
 
-  affected_containers | sort -u >"$CONTAINERS_FILE"
-  xargs -r docker stop -t 60 <"$CONTAINERS_FILE" >/dev/null
+  stop_containers
 
   log "Chép các file mới từ NAS về HDD (không xoá gì trên HDD)..."
   mount -o remount,rw "$OLD_HDD_MOUNT" || die "Không remount rw được $OLD_HDD_MOUNT"

@@ -20,7 +20,7 @@ main() {
   nas_wake
   nas_dest_ready || die "Đích $NAS_MOUNT/$NAS_HOMELAB_SUBDIR không sẵn sàng hoặc thiếu sentinel."
 
-  "$(dirname "$(readlink -f "$0")")/immich-db-dump.sh" || log "Cảnh báo: dump DB thất bại, vẫn chép dữ liệu."
+  "$(dirname "$(readlink -f "$0")")/db-dump.sh" || log "Cảnh báo: dump database thất bại, vẫn chép dữ liệu."
 
   log "rsync $PRIMARY/ → $NAS_MOUNT/$NAS_HOMELAB_SUBDIR/"
   rsync -aH --numeric-ids --partial --info=stats2 \

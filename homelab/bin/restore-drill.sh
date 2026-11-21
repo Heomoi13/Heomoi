@@ -10,15 +10,14 @@ load_config
 require_vars RESTIC_PASSWORD_FILE PRIMARY DUMP_DIR
 command -v jq >/dev/null || die "Thiếu jq (apt install jq)."
 
+work=$(mktemp -d /var/tmp/restore-drill.XXXX)
+trap 'rm -rf "$work"' EXIT
 target=${1:-local}
 case $target in
   local) repo=$RESTIC_REPO_LOCAL ;;
-  mac) repo=$RESTIC_REPO_MAC ;;
+  mac) repo=$RESTIC_REPO_MAC; mac_mount_disk; trap 'mac_unmount_disk; rm -rf "$work"' EXIT ;;
   *) die "Dùng: $0 local|mac" ;;
 esac
-
-work=$(mktemp -d /var/tmp/restore-drill.XXXX)
-trap 'rm -rf "$work"' EXIT
 
 snap_time=$(restic -r "$repo" snapshots latest --json | jq -r '.[0].time') || die "Không đọc được snapshot."
 snap_epoch=$(date -d "$snap_time" +%s)
@@ -43,7 +42,7 @@ while IFS= read -r f; do
 done <"$work/list"
 log "File: $ok khớp, $changed đã thay đổi sau snapshot, $bad lỗi"
 
-dump=$(restic -r "$repo" ls latest "$DUMP_DIR" 2>/dev/null | grep -E 'immich-.*\.sql\.gz$' | sort | tail -1)
+dump=$(restic -r "$repo" ls latest "$DUMP_DIR" 2>/dev/null | grep -E "${IMMICH_DB_CONTAINER:-immich_postgres}-.*\\.sql\\.gz\$" | sort | tail -1)
 dump_ok=0
 if [[ -n $dump ]]; then
   restic -r "$repo" dump latest "$dump" >"$work/dump.sql.gz"

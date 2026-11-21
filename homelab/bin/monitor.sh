@@ -39,11 +39,7 @@ storage() {
       alert backup-mount "$BACKUP_MOUNT không mount — ổ backup 3TB có thể đã hỏng"
     fi
   fi
-  # Ổ backup trên Mac M2
-  if [[ -n ${MAC_M2_USER:-} && $MAC_M2_USER != CHANGE_ME ]]; then
-    check_pct mac-space "Ổ backup Mac M2" \
-      "$(mac_ssh "df -P '$MAC_M2_BACKUP_DIR' | tail -1 | awk '{print \$5}'" 2>/dev/null | tr -dc 0-9)"
-  fi
+  # Ổ backup trên Mac M2 chỉ mount lúc backup → kiểm tra dung lượng nằm trong restic-backup.sh mac
 }
 
 nas_health() {

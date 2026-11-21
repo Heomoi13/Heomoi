@@ -17,7 +17,9 @@ main() {
   for t in $targets; do
     case $t in
       local) repo=$RESTIC_REPO_LOCAL ;;
-      mac) repo=$RESTIC_REPO_MAC ;;
+      mac) repo=$RESTIC_REPO_MAC
+           ( mac_mount_disk ) || { fail=1; continue; }
+           MAC_MOUNTED_BY_US=1; trap mac_unmount_disk EXIT ;;
       *) die "Kho không hợp lệ: $t" ;;
     esac
     if ! restic -r "$repo" cat config >/dev/null 2>&1; then

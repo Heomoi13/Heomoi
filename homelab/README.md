@@ -11,7 +11,8 @@
 |---|---|
 | Dữ liệu gốc (26k ảnh, 10k video, sách, Data) nằm trên **1 ổ HDD desktop** Seagate ST3000DM003 | Hỏng ổ là mất bản gốc |
 | Backup lên NAS **chưa bật** | Thực tế chỉ có 2 bản |
-| rsync sang Mac M2 **ghi đè**, không có phiên bản | File hỏng / bị mã hoá sẽ chép đè lên bản tốt |
+| rsync sang Mac M2 chỉ giữ lịch sử 90 ngày (`--backup-dir _history`), không kiểm tra toàn vẹn | Hỏng âm thầm phát hiện muộn hơn 90 ngày là mất; không biết bản backup còn đọc được không |
+| Ảnh gốc Immich (~90 GB) nằm trên **SSD hệ thống đơn** (Crucial BX500) | Hỏng SSD là mất ảnh tải lên từ điện thoại |
 | Không có UPS | Mất điện đột ngột có thể hỏng RAID / Btrfs |
 | 2 ổ WD Red trong NAS ~6 năm, cùng đợt | Dễ hỏng gần nhau, nhất là lúc rebuild |
 
@@ -21,7 +22,8 @@
    NAS UGREEN (DỮ LIỆU GỐC)  RAID1 + Btrfs + snapshot
           │ NFS, mount tại /srv/nas (giữ nguyên đường dẫn → container không phải sửa)
           ▼
-   Homeserver ── Immich / Syncthing / Calibre (Postgres + thumbnail trên NVMe)
+   Homeserver ── Immich (Postgres + thumbnail + video encode trên SSD)
+                 Syncthing (~/LLM_Vault), Calibre (~/cwa) — dữ liệu nhỏ, ở lại SSD, backup restic
           │ restic (có lịch sử phiên bản)
           ├──▶ HDD 3TB trong server  /srv/backup   hằng đêm 02:30   (bản 2)
           └──▶ Mac M2 /Volumes/Backup              hằng đêm 04:00   (bản 3)
@@ -29,8 +31,14 @@
 
 **Ngoài phạm vi (chủ nhà đã quyết định):** không nâng card mạng 2,5G; chưa làm backup ngoài nhà (offsite).
 
-**Thay đổi so với đề xuất ban đầu:** Syncthing **vẫn chạy trên server** (đọc/ghi qua NFS) thay vì chuyển sang NAS — ít thay đổi hơn,
-và vì server là nơi duy nhất ghi vào thư mục đó nên cơ chế theo dõi thay đổi của Syncthing vẫn hoạt động.
+**Điều chỉnh sau khảo sát (cổng 0, 21/11/2026):**
+- Server **không có SSD**: ổ hệ thống là SSD SATA Crucial BX500. Mọi chỗ ghi "SSD" là ổ này; `/srv/fast` là thư mục trên nó.
+- Ảnh gốc Immich nằm ở `~/immich/library` trên SSD, không phải `/srv/nas` → thêm **bước 4.0** đưa nó vào `/srv/nas` trước cutover.
+- Syncthing và Calibre **không dùng `/srv/nas`** (dữ liệu ở `~/LLM_Vault`, `~/cwa`). Chúng ở lại SSD và được restic backup hằng đêm.
+  Calibre dùng SQLite nên ở SSD là đúng.
+- Không có Home Assistant trên server.
+- Samba (`[share]`, `[timemachine]`) và cron finance đọc `/srv/nas` → cutover tự dừng `smbd` và `cron` rồi chạy lại.
+- Ổ backup trên Mac là ổ USB APFS chỉ mount khi backup → script tự `diskutil mount/unmount` qua SSH.
 
 ## 2. Quy tắc bắt buộc cho Hermes
 
@@ -54,7 +62,7 @@ homelab/
 │   ├── 00-discover.sh            ← GĐ0: khảo sát, chỉ đọc
 │   ├── setup-nfs.sh              ← GĐ1: kiểm tra và tạo automount NFS
 │   ├── seed-to-nas.sh            ← GĐ1: sao lưu mồi hằng tuần lên NAS
-│   ├── immich-db-dump.sh         ← dump Postgres của Immich
+│   ├── db-dump.sh                ← dump các Postgres (Immich, knowledge_db) trước mỗi lần backup
 │   ├── nut-shutdown.sh           ← GĐ2: tắt máy có thứ tự khi UPS yếu pin
 │   ├── nut-notify.sh             ← GĐ2: báo sự kiện UPS lên Telegram
 │   ├── nas-precheck.sh           ← GĐ3/6: kiểm tra trước/sau thay ổ NAS
@@ -66,7 +74,7 @@ homelab/
 ├── config/                       ← mẫu cấu hình (→ /etc/homelab/)
 ├── systemd/                      ← service + timer (→ /etc/systemd/system/)
 ├── nut/                          ← cấu hình UPS (→ /etc/nut/)
-└── compose/immich/               ← mẫu override thumbnail lên NVMe
+└── compose/immich/               ← mẫu override thumbnail lên SSD
 ```
 
 ## 4. Tổng quan tiến độ
@@ -77,8 +85,8 @@ homelab/
 | 1 | Bật NFS + sao lưu mồi lên NAS | 👤 + 🤖 | Tuần 1 | Không |
 | 2 | UPS + NUT | 👤 + 🤖 | Tuần 1–2 | Không |
 | 3 | Thay ổ WD Red **thứ nhất** | 👤 + 🤖 | Tuần 2 (trước GĐ4) | Không |
-| 4 | Cutover: dữ liệu gốc lên NAS | 🤖 (⛔) | Tuần 3, buổi tối | Immich ~1–4 giờ |
-| 4b | Thumbnail Immich về NVMe | 🤖 | Sau GĐ4 ~1 tuần | Immich ~30 phút |
+| 4.0 | Đưa ảnh gốc Immich từ SSD vào `/srv/nas` | 🤖 (⛔) | Tuần 3, trước cutover | Immich ~30 phút |
+| 4 | Cutover: dữ liệu gốc lên NAS | 🤖 (⛔) | Tuần 3, buổi tối | Immich, Samba, cron ~1–3 giờ |
 | 5 | restic + snapshot + giám sát | 👤 + 🤖 | Sau GĐ4 ≥ 14 ngày | Không |
 | 6 | Thay ổ WD Red **thứ hai** | 👤 + 🤖 | 2–3 tháng sau GĐ3 | Không |
 | 7 | Diễn tập khôi phục | 🤖 tự động | Mỗi quý | Không |
@@ -112,17 +120,41 @@ bunzip2 -f /tmp/restic.bz2 && sudo install -m 0755 /tmp/restic /usr/local/bin/re
 ```bash
 sudo test -f /root/.ssh/id_ed25519 || sudo ssh-keygen -t ed25519 -N '' -f /root/.ssh/id_ed25519
 sudo ssh-copy-id nando@192.168.1.123        # 👤 nhập mật khẩu NAS một lần
-sudo ssh-copy-id <user-mac>@192.168.0.77    # 👤 nhập mật khẩu Mac một lần (Mac: bật Remote Login)
+sudo ssh-copy-id namdo@100.84.51.36         # 👤 nhập mật khẩu Mac một lần (Mac: bật Remote Login)
 ```
 
-Thêm vào `/root/.ssh/config` để restic/ssh không bao giờ treo chờ mật khẩu:
+**UGOS tự tắt SSH sau một thời gian.** 👤 Bảng điều khiển → Terminal → bật SSH **và tắt tuỳ chọn tự động tắt**.
+
+Thêm vào `/root/.ssh/config` để restic/ssh không bao giờ treo chờ mật khẩu.
+Mac dùng IP Tailscale (cố định) thay vì IP LAN (DHCP có thể đổi):
 
 ```
-Host 192.168.1.123 192.168.0.77
+Host 192.168.1.123
+    BatchMode yes
+    ConnectTimeout 10
+    ServerAliveInterval 30
+
+Host mac-m2
+    HostName 100.84.51.36
+    User namdo
+    IdentityFile /root/.ssh/id_ed25519
     BatchMode yes
     ConnectTimeout 10
     ServerAliveInterval 30
 ```
+
+Kiểm tra: `sudo ssh mac-m2 true && sudo ssh nando@192.168.1.123 true`.
+
+**Sudo không mật khẩu trên NAS (giới hạn đúng 2 lệnh).** 👤 SSH vào NAS bằng `nando`, tìm đường dẫn thật
+(`which smartctl shutdown`), rồi:
+
+```bash
+echo 'nando ALL=(root) NOPASSWD: /usr/sbin/smartctl, /sbin/shutdown' | sudo tee /etc/sudoers.d/homelab
+sudo chmod 440 /etc/sudoers.d/homelab && sudo visudo -c
+```
+
+(Sửa đường dẫn theo kết quả `which`.) Bản cập nhật UGOS có thể xoá file này — `monitor.sh` sẽ cảnh báo
+"không đọc được SMART" khi điều đó xảy ra. Nếu UGOS không cho sửa sudoers: bật thông báo sức khoẻ ổ đĩa trong UGOS thay thế.
 
 **0.3 🤖 Chạy khảo sát**
 
@@ -194,6 +226,7 @@ sudo systemctl enable --now homelab-seed.timer
 ```
 
 Xoá hoặc comment dòng cron cũ "CN 03:00 → NAS /mnt/nas-ugreen (chưa bật)" nếu có, để không trùng.
+Cron `backup_to_mac.sh` 02:30 **giữ nguyên** đến giai đoạn 5.
 
 ✅ **Xong khi:** `/var/lib/homelab/seed.last_ok` có ngày hôm nay, Healthchecks xanh.
 
@@ -289,14 +322,47 @@ sudo /opt/homelab/bin/nas-precheck.sh after
 
 **Cách làm:** giữ nguyên đường dẫn `/srv/nas`. Sau cutover nó là mount NFS từ `NAS:/volume1/data/homelab`;
 ổ HDD cũ chuyển sang `/mnt/old-hdd` **chỉ đọc**. Không container nào phải sửa đường dẫn.
-Thư mục `/srv/nas` gốc trên NVMe bị khoá `chattr +i` → nếu NFS không mount được, **không gì ghi nhầm vào đó**;
+Thư mục `/srv/nas` gốc trên SSD bị khoá `chattr +i` → nếu NFS không mount được, **không gì ghi nhầm vào đó**;
 Immich sẽ tự từ chối khởi động vì không thấy file `.immich`.
 
-**4.1 🤖 (Chỉ khi GĐ0 phát hiện) Chuyển Postgres của Immich về NVMe** — database **không bao giờ** được nằm trên NFS:
+**4.0 🤖 Đưa ảnh gốc Immich từ SSD vào `/srv/nas`** (làm trên HDD trước, cutover sẽ đưa lên NAS cùng mọi thứ khác).
+
+Vì sao: ảnh tải lên từ điện thoại hiện chỉ nằm trên một SSD giá rẻ — đúng loại rủi ro mà kế hoạch này muốn loại bỏ.
+Thumbnail và video encode **ở lại SSD** (tạo lại được, cần đọc nhanh). Đường dẫn bên trong container không đổi,
+nên database Immich không phải sửa gì.
+
+```bash
+cd /home/namdo/immich
+docker inspect immich_server -f '{{range .Mounts}}{{.Source}} -> {{.Destination}}{{"\n"}}{{end}}'   # ghi lại đích của UPLOAD_LOCATION (/data hoặc /usr/src/app/upload)
+ls -la library/                                       # các thư mục con: library upload profile backups thumbs encoded-video (+ file .immich)
+du -sh library/*
+sudo /opt/homelab/bin/db-dump.sh                      # dump phòng thân
+cp .env .env.bak-$(date +%F)
+docker compose down
+
+sudo mkdir -p /srv/nas/immich
+sudo rsync -aH --numeric-ids --info=progress2 --exclude=/thumbs --exclude=/encoded-video library/ /srv/nas/immich/
+sudo rsync -aHn --numeric-ids -i --checksum --exclude=/thumbs --exclude=/encoded-video library/ /srv/nas/immich/ | wc -l   # phải = 0
+sudo mkdir -p /srv/nas/immich/thumbs /srv/nas/immich/encoded-video   # điểm mount rỗng
+```
+
+Sửa `.env`: `UPLOAD_LOCATION=/srv/nas/immich`. Tạo `docker-compose.override.yml` từ
+`homelab/compose/immich/docker-compose.override.yml.example` (sửa `/data` nếu đích khác; gộp nếu đã có override) để
+`thumbs` và `encoded-video` vẫn trỏ về `/home/namdo/immich/library/...` trên SSD.
+
+```bash
+docker compose up -d && docker compose logs -f immich-server   # không có lỗi ".immich" / "mount"
+```
+
+👤 Mở Immich: xem ảnh cũ (ảnh gốc, không chỉ thumbnail), tải lên 1 ảnh mới, kiểm tra file mới xuất hiện trong `/srv/nas/immich/upload/`.
+Giữ `~/immich/library/{library,upload,profile}` cũ trên SSD đến hết GĐ4 + 14 ngày rồi mới xoá (⛔ hỏi chủ nhà).
+Cập nhật `homelab.env`: `IMMICH_UPLOAD_HOST=/srv/nas/immich`.
+
+**4.1 (Không cần — GĐ0 xác nhận Postgres đã ở SSD.)** Giữ lại để tham khảo: database **không bao giờ** được nằm trên NFS:
 
 ```bash
 cd "$IMMICH_COMPOSE_DIR"
-sudo /opt/homelab/bin/immich-db-dump.sh              # dump phòng thân
+sudo /opt/homelab/bin/db-dump.sh                     # dump phòng thân
 docker compose down
 sudo mkdir -p /srv/fast/immich/postgres
 sudo rsync -aH --numeric-ids <DB_DATA_LOCATION cũ>/ /srv/fast/immich/postgres/
@@ -325,8 +391,9 @@ sudo CONFIRM=YES /opt/homelab/bin/cutover.sh switch
 # Nếu chủ nhà đã chấp nhận file SQLite ở cổng 0:  sudo CONFIRM=YES ACK_SQLITE=yes /opt/homelab/bin/cutover.sh switch
 ```
 
-Script tự làm: dừng container → chép lần cuối (`--delete`) → **so checksum toàn bộ** (có thể mất 3–4 giờ với ~1,5TB) →
-gỡ HDD → khoá thư mục → sửa `/etc/fstab` (có bản sao) → mount NFS + HDD chỉ đọc → chạy lại container → tắt timer seed.
+Script tự làm: dừng container + `smbd` + `cron` → chép lần cuối (`--delete`) → **so checksum toàn bộ** (có thể mất 3–4 giờ với ~1,5TB) →
+gỡ HDD → khoá thư mục → sửa `/etc/fstab` (có bản sao) → mount NFS + HDD chỉ đọc → chạy lại container và dịch vụ → tắt timer seed.
+Các Mac đang Time Machine vào share `[timemachine]` sẽ báo lỗi một lần trong lúc này — bình thường.
 Bất kỳ bước nào lỗi trước khi đổi mount: dịch vụ chạy lại trên HDD, **không mất gì**. Lỗi ở bước mount: tự quay về bố cục cũ.
 
 **4.4 🤖 Kiểm tra sau cutover:**
@@ -338,9 +405,11 @@ docker ps                        # mọi container Up, không restart liên tụ
 docker logs --tail 50 immich_server
 ```
 
-👤 Kiểm tra thực tế: mở Immich xem album cũ, **tải lên 1 ảnh mới từ điện thoại**, xem Syncthing đồng bộ, mở Calibre/Kobo.
+👤 Kiểm tra thực tế: mở Immich xem album cũ, **tải lên 1 ảnh mới từ điện thoại**, mở share `[share]` từ Mac,
+finance-dashboard hiển thị báo cáo, Time Machine chạy được một lần.
 
-🤖 Cron rsync sang Mac M2 lúc 02:30 **giữ nguyên** (nguồn vẫn là `/srv/nas`, giờ đọc qua NFS) — đây là bản sao thứ 3 trong thời gian chờ GĐ5.
+🤖 Cron `backup_to_mac.sh` lúc 02:30 **giữ nguyên**. Nếu nó đọc `~/immich/library` thì sửa nguồn thành `/srv/nas/immich`
+(sau bước 4.0) — đây là bản sao thứ 3 trong thời gian chờ GĐ5.
 
 **Đường lui (trong 14 ngày đầu):**
 
@@ -354,31 +423,13 @@ Chép các file mới từ NAS về HDD (không xoá gì), khôi phục fstab, c
 
 ---
 
-## Giai đoạn 4b — Thumbnail và video encode của Immich về NVMe (khuyến nghị)
-
-**Vì sao:** thumbnail là hàng chục nghìn file nhỏ được đọc liên tục khi cuộn timeline — NVMe nhanh hơn NFS rất nhiều.
-Chúng tạo lại được nên không cần nằm trên NAS và không cần backup.
-
-```bash
-cd "$IMMICH_COMPOSE_DIR"
-docker inspect immich_server -f '{{range .Mounts}}{{.Source}} -> {{.Destination}}{{"\n"}}{{end}}'   # xác định đường dẫn trong container (/data hay /usr/src/app/upload)
-docker compose stop immich-server
-sudo mkdir -p /srv/fast/immich
-sudo rsync -aH --numeric-ids "$IMMICH_UPLOAD_HOST/thumbs/" /srv/fast/immich/thumbs/
-sudo rsync -aH --numeric-ids "$IMMICH_UPLOAD_HOST/encoded-video/" /srv/fast/immich/encoded-video/
-cp /path/to/homelab/compose/immich/docker-compose.override.yml.example docker-compose.override.yml   # sửa /data nếu khác; gộp nếu đã có override
-docker compose up -d
-```
-
-Kiểm tra Immich hiển thị thumbnail bình thường 1 tuần, rồi mới xoá `thumbs/` và `encoded-video/` cũ trên NAS (⛔ hỏi chủ nhà trước khi xoá).
-Đặt `BACKUP_EXCLUDE_PATHS="$IMMICH_UPLOAD_HOST/thumbs $IMMICH_UPLOAD_HOST/encoded-video"` trong `homelab.env`.
-
----
-
 ## Giai đoạn 5 — Backup restic, snapshot, giám sát
 
 **Vì sao:** rsync ghi đè → file hỏng/bị mã hoá sẽ đè lên bản tốt. restic giữ nhiều phiên bản (7 ngày, 4 tuần, 12 tháng),
 loại bỏ dữ liệu trùng (dedup), và kiểm tra được tính toàn vẹn. Snapshot Btrfs trên NAS cho phép lấy lại file xoá nhầm trong vài giây.
+
+**Lưu ý dung lượng:** cần backup ~620 GB trong `/srv/nas` (đã trừ `immich-encoded`) + vài chục GB trên SSD — vừa ổ 3TB lẫn Mac 1,8TB.
+Không backup `[timemachine]` (là backup của Mac, đã có ở nơi khác): thêm đường dẫn của nó vào `BACKUP_EXCLUDE_PATHS`.
 
 **Thứ tự quan trọng vì Mac chỉ có 1,8TB:** làm kho local trước → xác nhận → mới xoá bản rsync cũ trên Mac để lấy chỗ cho kho restic.
 
@@ -424,15 +475,17 @@ sudo systemctl enable --now homelab-backup-local.timer
 
 **5.5 🤖 Chuyển Mac M2 từ rsync sang restic** (sau khi 5.4 đã chạy thành công ≥ 2 đêm):
 
-⛔ **CỔNG 5c — chủ nhà xác nhận** xoá bản rsync cũ trên Mac (đường dẫn cụ thể lấy từ cron cũ ở báo cáo GĐ0).
+⛔ **CỔNG 5c — chủ nhà xác nhận** xoá bản rsync cũ `/Volumes/Backup/immich-backup` (gồm cả `_history`) trên Mac.
 
-1. Tắt dòng cron rsync 02:30 cũ (comment lại, ghi chú ngày).
-2. Xoá thư mục bản rsync cũ trên Mac theo đúng đường dẫn đã được xác nhận.
+1. Tắt dòng cron `backup_to_mac.sh` 02:30 (comment lại, ghi chú ngày).
+2. Điền `MAC_BACKUP_VOLUME` = Volume UUID của ổ "Backup" (`ssh mac-m2 diskutil info /Volumes/Backup | grep 'Volume UUID'` khi ổ đang mount).
+3. Xoá `/Volumes/Backup/immich-backup` trên Mac (chỉ đúng thư mục này).
 3. Khởi tạo và chạy:
 
 ```bash
+ssh mac-m2 "/usr/sbin/diskutil mount <MAC_BACKUP_VOLUME>"   # kho mac cần ổ đang mount khi init
 sudo /opt/homelab/bin/restic-init.sh mac
-sudo systemctl start homelab-backup-mac.service
+sudo systemctl start homelab-backup-mac.service              # script tự mount/gỡ ổ từ đây trở đi
 sudo systemctl enable --now homelab-backup-mac.timer
 ```
 
@@ -493,6 +546,7 @@ Lấy ngẫu nhiên 20 file từ snapshot mới nhất so SHA-256 với file đa
 | CN 06:00 | `homelab-maintain` (prune + check 5%) | — |
 | Mỗi quý | `homelab-restore-drill` | — |
 | ~~CN 03:00~~ | ~~`homelab-seed`~~ | tự tắt sau cutover |
+| ~~02:30~~ | ~~`backup_to_mac.sh` (cron cũ)~~ | thay bằng `homelab-backup-mac` ở GĐ5 |
 
 ## 7. Xử lý sự cố nhanh
 

@@ -79,7 +79,7 @@ flag() { FLAGS+=("$*"); }
     DBLOC=$(grep -E '^DB_DATA_LOCATION=' "$IMMICH_DIR/.env" | cut -d= -f2-)
     [[ $DBLOC == ./* ]] && DBLOC="$IMMICH_DIR/${DBLOC#./}"
     if [[ -n $DBLOC && $(readlink -f "$DBLOC") == "$PRIMARY"* ]]; then
-      flag "⛔ Postgres của Immich đang ở $DBLOC (trong $PRIMARY). PHẢI chuyển sang NVMe trước cutover (giai đoạn 4, bước 4.1)."
+      flag "⛔ Postgres của Immich đang ở $DBLOC (trong $PRIMARY). PHẢI chuyển sang SSD trước cutover (giai đoạn 4, bước 4.1)."
     fi
   else
     flag "Không đọc được .env của Immich — người cần chỉ ra thư mục compose."
@@ -150,7 +150,7 @@ flag() { FLAGS+=("$*"); }
   used=$(df -B1 --output=used "$PRIMARY" 2>/dev/null | tail -1)
   nvme_avail=$(df -B1 --output=avail / | tail -1)
   printf -- '- Dữ liệu trong %s: **%s**\n' "$PRIMARY" "$(numfmt --to=iec "${used:-0}")"
-  printf -- '- Còn trống trên NVMe (/): **%s**\n' "$(numfmt --to=iec "${nvme_avail:-0}")"
+  printf -- '- Còn trống trên SSD (/): **%s**\n' "$(numfmt --to=iec "${nvme_avail:-0}")"
   echo "- So sánh thủ công với: dung lượng trống trên NAS (mục 9) và ổ Mac (mục 10)."
   if [[ -n $used ]] && ((used > 2200000000000)); then
     flag "Dữ liệu > 2,2 TB: ổ backup 3TB sẽ chật khi giữ nhiều phiên bản; Mac 1,8TB không chứa nổi một bản đầy đủ."
@@ -166,7 +166,7 @@ flag() { FLAGS+=("$*"); }
   fi
   cat <<'EOF'
 - Xác nhận danh sách container sẽ bị dừng khi cutover (các dòng ⚠️ ở mục 4).
-- Quyết định cho từng file SQLite ở mục 3 (chuyển sang NVMe hay chấp nhận để trên NFS).
+- Quyết định cho từng file SQLite ở mục 3 (chuyển sang SSD hay chấp nhận để trên NFS).
 - Đề xuất bổ sung BACKUP_PATHS: thư mục compose/config của các stack (mục 4, cột dir=).
 - Xác nhận các giá trị CHANGE_ME trong /etc/homelab/homelab.env.
 EOF

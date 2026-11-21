@@ -1,13 +1,15 @@
-# GIAI ĐOẠN 4b (khuyến nghị) — Đưa thumbnail và video encode của Immich về NVMe.
-# Đặt file này cạnh docker-compose.yml của Immich với tên docker-compose.override.yml
-# (nếu đã có file override thì GỘP phần volumes vào, không ghi đè).
+# GIAI ĐOẠN 4.0 — Ảnh gốc Immich nằm trong /srv/nas/immich (sau cutover là NAS),
+# còn thumbnail và video encode ở lại SSD để đọc nhanh (tạo lại được, không cần backup).
 #
-# MEDIA_IN_CONTAINER: đường dẫn trong container mà UPLOAD_LOCATION đang được mount vào.
+# Đặt file này cạnh docker-compose.yml của Immich (/home/namdo/immich) với tên
+# docker-compose.override.yml. Nếu đã có file override thì GỘP phần volumes vào, không ghi đè.
+#
+# "/data" là đường dẫn trong container mà UPLOAD_LOCATION được mount vào:
 #   - Immich bản mới: /data
-#   - Immich bản cũ : /usr/src/app/upload
-# Hermes xác định bằng: docker inspect immich_server -f '{{range .Mounts}}{{.Source}} -> {{.Destination}}{{"\n"}}{{end}}'
+#   - Immich bản cũ : /usr/src/app/upload   → sửa 2 dòng dưới cho khớp
+# Xác định bằng: docker inspect immich_server -f '{{range .Mounts}}{{.Source}} -> {{.Destination}}{{"\n"}}{{end}}'
 services:
   immich-server:
     volumes:
-      - /srv/fast/immich/thumbs:/data/thumbs
-      - /srv/fast/immich/encoded-video:/data/encoded-video
+      - /home/namdo/immich/library/thumbs:/data/thumbs
+      - /home/namdo/immich/library/encoded-video:/data/encoded-video

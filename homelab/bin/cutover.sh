@@ -199,7 +199,8 @@ switch() {
     !/^[[:space:]]*#/ && $2==p { $2=o; $4=$4",ro,nofail" } {print}' "$bak" >/etc/fstab.new
   {
     echo "$FSTAB_MARK"
-    echo "$NFS_SRC $PRIMARY nfs $NFS_OPTS,_netdev,x-systemd.mount-timeout=60 0 0"
+    # Sau mất điện, server và NAS khởi động cùng lúc; server lên nhanh hơn → thử lại tới 5 phút chờ NAS.
+    echo "$NFS_SRC $PRIMARY nfs $NFS_OPTS,_netdev,retry=5,x-systemd.mount-timeout=360 0 0"
   } >>/etc/fstab.new
   mv /etc/fstab.new /etc/fstab
   mkdir -p "$OLD_HDD_MOUNT"

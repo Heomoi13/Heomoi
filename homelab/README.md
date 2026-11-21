@@ -587,5 +587,8 @@ Lấy ngẫu nhiên 20 file từ snapshot mới nhất so SHA-256 với file đa
 
 ## 8. Thứ tự bật lại sau khi tắt toàn bộ
 
-**NAS trước → chờ UGOS lên hẳn (~3 phút) → server.** Nếu server lên trước, `/srv/nas` sẽ chờ tối đa 60 giây rồi bỏ qua;
-khi đó chạy `sudo mount /srv/nas && docker restart immich_server` (và các container dùng `/srv/nas`).
+**NAS trước → chờ UGOS lên hẳn (~3 phút) → server.** Khi mất điện (chưa có UPS) cả hai tự khởi động cùng lúc:
+`/srv/nas` tự thử lại tới 5 phút chờ NAS (`retry=5`), Docker chờ theo. Nếu NAS lâu hơn thế,
+chạy `sudo mount /srv/nas && docker restart immich_server` (và các container dùng `/srv/nas`).
+
+👤 Trong BIOS server và cài đặt nguồn UGOS: bật **tự khởi động lại khi có điện trở lại** (AC power recovery / Restore on AC power loss).

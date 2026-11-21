@@ -9,7 +9,7 @@ require_root
 load_config optional
 
 NAS_IP=${NAS_IP:-192.168.1.123}
-NAS_SSH_USER=${NAS_SSH_USER:-nando}
+NAS_SSH_USER=${NAS_SSH_USER:-namdo}
 PRIMARY=${PRIMARY:-/srv/nas}
 MAC_M2_HOST=${MAC_M2_HOST:-192.168.0.77}
 MAC_M2_USER=${MAC_M2_USER:-}

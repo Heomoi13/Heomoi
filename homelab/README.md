@@ -121,7 +121,7 @@ bunzip2 -f /tmp/restic.bz2 && sudo install -m 0755 /tmp/restic /usr/local/bin/re
 
 ```bash
 sudo test -f /root/.ssh/id_ed25519 || sudo ssh-keygen -t ed25519 -N '' -f /root/.ssh/id_ed25519
-sudo ssh-copy-id nando@192.168.1.123        # 👤 nhập mật khẩu NAS một lần
+sudo ssh-copy-id namdo@192.168.1.123        # 👤 nhập mật khẩu NAS một lần
 sudo ssh-copy-id namdo@100.84.51.36         # 👤 nhập mật khẩu Mac một lần (Mac: bật Remote Login)
 ```
 
@@ -145,13 +145,13 @@ Host mac-m2
     ServerAliveInterval 30
 ```
 
-Kiểm tra: `sudo ssh mac-m2 true && sudo ssh nando@192.168.1.123 true`.
+Kiểm tra: `sudo ssh mac-m2 true && sudo ssh namdo@192.168.1.123 true`.
 
-**Sudo không mật khẩu trên NAS (giới hạn đúng 2 lệnh).** 👤 SSH vào NAS bằng `nando`, tìm đường dẫn thật
+**Sudo không mật khẩu trên NAS (giới hạn đúng 2 lệnh).** 👤 SSH vào NAS bằng `namdo`, tìm đường dẫn thật
 (`which smartctl shutdown`), rồi:
 
 ```bash
-echo 'nando ALL=(root) NOPASSWD: /usr/sbin/smartctl, /sbin/shutdown' | sudo tee /etc/sudoers.d/homelab
+echo 'namdo ALL=(root) NOPASSWD: /usr/sbin/smartctl, /sbin/shutdown' | sudo tee /etc/sudoers.d/homelab
 sudo chmod 440 /etc/sudoers.d/homelab && sudo visudo -c
 ```
 
@@ -193,7 +193,7 @@ Dùng NFS thay SMB vì NFS giữ đúng chủ sở hữu/quyền file Linux mà 
 - Thư mục chia sẻ `data` → Quyền NFS → thêm quy tắc:
   máy khách `192.168.0.88` · đọc/ghi · **squash: không ánh xạ (no mapping / no_root_squash)** · đồng bộ (sync).
 - Bật SSH (nếu chưa bật lâu dài).
-- (Khuyến nghị) Cho user `nando` chạy `smartctl` và `shutdown` bằng sudo không mật khẩu.
+- (Khuyến nghị) Cho user `namdo` chạy `smartctl` và `shutdown` bằng sudo không mật khẩu.
   Nếu UGOS không cho phép: bật thông báo sức khoẻ ổ đĩa của UGOS (email/app) thay thế.
 
 **1.2 🤖 Kiểm tra NFS** (chỉ mount thử rồi gỡ):

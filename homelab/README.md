@@ -41,6 +41,12 @@
 - Không có Home Assistant trên server.
 - Samba (`[share]`, `[timemachine]`) và cron finance đọc `/srv/nas` → cutover tự dừng `smbd` và `cron` rồi chạy lại.
 - Ổ backup trên Mac là ổ USB APFS chỉ mount khi backup → script tự `diskutil mount/unmount` qua SSH.
+- **UGOS không cho SSH bằng khoá:** user không có thư mục home, `/home` chỉ đọc, giao diện không có tuỳ chọn bật home
+  (đã kiểm User Management và File Service, 22/11/2026). Vì vậy:
+  - Giám sát RAID/SMART của NAS dùng **thông báo có sẵn của UGOS** (app UGREEN NAS / email), **không bật** `homelab-nas-health.timer`.
+  - Server vẫn tự giám sát phía mình: `homelab-monitor-storage` (mount `/srv/nas`) và Healthchecks của các job backup.
+  - GĐ2: lệnh tắt NAS qua SSH trong `nut-shutdown.sh` sẽ không chạy được → dùng chức năng UPS của UGOS (NUT client hoặc tự tắt khi mất điện).
+  - GĐ3/6: `nas-precheck.sh` không đọc được `/proc/mdstat` của NAS → kiểm tra RAID và SMART trên giao diện UGOS (Storage Manager).
 
 ## 2. Quy tắc bắt buộc cho Hermes
 

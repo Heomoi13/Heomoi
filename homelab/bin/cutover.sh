@@ -64,14 +64,28 @@ start_services() {
   while read -r s; do systemctl start "$s" && log "Đã chạy lại dịch vụ $s"; done <"$SERVICES_FILE"
 }
 
+# Cờ bảo trì: script giám sát khác (vd. job tự restart container của Hermes) PHẢI bỏ qua khi file này tồn tại.
+# Bài học 22/11/2026: một job giám sát đã bật lại container giữa lúc đang kiểm tra checksum.
+MAINT_FLAG=/run/homelab-maintenance
+
 stop_containers() {
+  echo "cutover $CMD từ $(date '+%F %T') — không tự khởi động lại container" >"$MAINT_FLAG"
   stop_services
   affected_containers | sort -u >"$CONTAINERS_FILE"
   log "Dừng $(wc -l <"$CONTAINERS_FILE") container: $(tr '\n' ' ' <"$CONTAINERS_FILE")"
   [[ -s $CONTAINERS_FILE ]] && xargs -r docker stop -t 60 <"$CONTAINERS_FILE" >/dev/null
 }
 
+# In ra tên các container trong danh sách đã dừng mà nay lại đang chạy.
+containers_restarted() {
+  local c
+  while read -r c; do
+    [[ $(docker inspect -f '{{.State.Running}}' "$c" 2>/dev/null) == true ]] && echo "$c"
+  done <"$CONTAINERS_FILE"
+}
+
 start_containers() {
+  rm -f "$MAINT_FLAG"
   start_services
   [[ -s $CONTAINERS_FILE ]] || return 0
   log "Khởi động lại: $(tr '\n' ' ' <"$CONTAINERS_FILE")"
@@ -184,6 +198,15 @@ switch() {
   bak=/etc/fstab.homelab-cutover-$(date +%Y%m%d-%H%M%S)
   cp -a /etc/fstab "$bak"
   echo "$bak" >"$HOMELAB_STATE/cutover.fstab_backup"
+
+  # Container bị thứ khác bật lại trong lúc kiểm tra → dữ liệu có thể đã thay đổi sau khi so sánh,
+  # và gỡ ổ khi container còn giữ mount cũ sẽ làm chúng tiếp tục ghi vào HDD. Huỷ an toàn.
+  local back
+  back=$(containers_restarted | tr '\n' ' ')
+  if [[ -n $back ]]; then
+    start_containers
+    die "Container bị khởi động lại giữa chừng: $back— huỷ cutover, chưa đổi gì. Tắt job tự restart rồi chạy lại sync + switch."
+  fi
 
   log "Gỡ HDD khỏi $PRIMARY"
   if ! umount "$PRIMARY"; then

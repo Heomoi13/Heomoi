@@ -422,6 +422,30 @@ gỡ HDD → khoá thư mục → sửa `/etc/fstab` (có bản sao) → mount N
 Các Mac đang Time Machine vào share `[timemachine]` sẽ báo lỗi một lần trong lúc này — bình thường.
 Bất kỳ bước nào lỗi trước khi đổi mount: dịch vụ chạy lại trên HDD, **không mất gì**. Lỗi ở bước mount: tự quay về bố cục cũ.
 
+**Trước khi switch: tắt mọi job tự khởi động lại container** (job giám sát của Hermes, Watchtower, script tự viết…).
+Trong lúc switch, script tạo cờ `/run/homelab-maintenance`; job giám sát phải bỏ qua khi thấy file này.
+Nếu container bị bật lại giữa chừng, script tự huỷ trước khi gỡ ổ.
+
+**Thực tế lần chạy 22/11/2026** (924 GB, 130 nghìn file, NFSv3 sync, 1GbE):
+
+| Bước | Thời gian |
+|---|---|
+| `sync` (chép ~102 GB ảnh Immich sau bước 4.0) | 1 giờ |
+| `switch`: chép lần cuối | 37 giây |
+| `switch`: so checksum toàn bộ | **4 giờ 39 phút** (10:00 → 14:39) — đọc NAS chỉ ~30 MB/s khi HDD còn đọc song song, ~110 MB/s khi HDD đọc xong |
+| Tổng thời gian dịch vụ ngừng | ~4 giờ 40 phút |
+
+Sự cố trong lần chạy: job giám sát của Hermes thấy container tắt nên tự bật lại lúc 13:13. Đã dừng tay; so sánh
+`/mnt/old-hdd` với `/srv/nas` sau đó chỉ lệch 5 file `.immich` (khác thời gian, cùng nội dung). Từ đó thêm cờ bảo trì
+và bước tự huỷ ở trên.
+
+Sau switch, luôn so lại ổ cũ với NAS và kiểm tra Immich đang đọc từ NFS:
+
+```bash
+sudo rsync -aHn --numeric-ids -i --exclude-from=/etc/homelab/excludes.txt /mnt/old-hdd/ /srv/nas/ | grep -v '^\.d\.\.t'
+docker exec immich_server stat -f -c %T /data      # phải ra nfs
+```
+
 **4.4 🤖 Kiểm tra sau cutover:**
 
 ```bash

@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Bệnh Viện Gấu Bông</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap">
+<style>
+/* Layout: one-screen picture-book app — header, nurse speech bubble, stage, tool tray. Single bright theme on purpose. */
+:root {
+  color-scheme: light;
+  --bg: #d7f1ec;        /* mint hospital wall */
+  --paper: #ffffff;
+  --ink: #1f3b4d;       /* deep teal-navy text */
+  --ink-soft: #4f6b7a;
+  --teal: #20a596;      /* scrubs */
+  --coral: #ff6b6b;     /* red cross */
+  --sun: #ffc94d;
+  --sky: #8fd3ff;
+  --lilac: #b48cf2;
+  --line: #b8e0d8;
+  --shadow: 0 6px 0 rgba(31,59,77,.18);
+  --font: "Baloo 2", "Nunito", "Segoe UI Rounded", "Arial Rounded MT Bold", system-ui, sans-serif;
+  --r: 28px;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font);
+  overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: manipulation;
+  background-image: radial-gradient(circle at 20px 20px, rgba(255,255,255,.55) 3px, transparent 4px);
+  background-size: 40px 40px;
+}
+button { font-family: inherit; color: inherit; cursor: pointer; border: 0; }
+button:focus-visible { outline: 5px solid var(--sun); outline-offset: 3px; }
+
+#app {
+  height: 100%; display: flex; flex-direction: column; gap: 10px;
+  padding-block: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  max-width: 1100px; margin: 0 auto;
+}
+
+/* ---------- top bar ---------- */
+.bar { display: flex; align-items: center; gap: 12px; }
+.round {
+  width: 64px; height: 64px; flex: none; border-radius: 50%; background: var(--paper);
+  font-size: 32px; box-shadow: var(--shadow); display: grid; place-items: center;
+  transition: transform .12s;
+}
+.round:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(31,59,77,.18); }
+.title {
+  flex: 1; min-width: 0; text-align: center; font-weight: 800; line-height: 1;
+  font-size: clamp(24px, 5.5vw, 44px); letter-spacing: .01em; text-wrap: balance;
+}
+.title .cross { color: var(--coral); }
+
+/* ---------- nurse bubble ---------- */
+.guide { display: flex; align-items: center; gap: 10px; }
+.nurse { font-size: 52px; line-height: 1; flex: none; filter: drop-shadow(0 3px 0 rgba(0,0,0,.12)); }
+.bubble {
+  flex: 1; min-width: 0; background: var(--paper); border-radius: 22px; padding: 10px 16px;
+  font-size: clamp(18px, 3.6vw, 26px); font-weight: 700; line-height: 1.25; position: relative;
+  box-shadow: var(--shadow); text-align: left;
+}
+.bubble::before {
+  content: ""; position: absolute; left: -12px; top: 50%; translate: 0 -50%;
+  border: 10px solid transparent; border-right: 14px solid var(--paper); border-left: 0;
+}
+.bubble .again { float: right; font-size: 24px; margin-left: 8px; opacity: .7; }
+
+/* ---------- stage ---------- */
+.stage { flex: 1; min-height: 0; position: relative; display: flex; flex-direction: column; gap: 10px; }
+.scene {
+  flex: 1; min-height: 0; position: relative; border-radius: var(--r); overflow: hidden;
+  background: var(--paper); box-shadow: var(--shadow);
+}
+.scene svg.main { position: absolute; inset: 0; width: 100%; height: 100%; }
+.tray { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.tool {
+  min-width: 92px; height: 92px; padding: 6px 10px; border-radius: 26px; background: var(--paper);
+  box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 44px; line-height: 1; position: relative; transition: transform .12s, opacity .2s;
+}
+.tool small { font-size: 15px; font-weight: 700; margin-top: 4px; color: var(--ink-soft); }
+.tool:active { transform: translateY(4px); }
+.tool.done::after {
+  content: "✔"; position: absolute; top: -6px; right: -6px; width: 30px; height: 30px; border-radius: 50%;
+  background: var(--teal); color: #fff; font-size: 18px; display: grid; place-items: center;
+}
+.tool.next { animation: nudge 1.1s ease-in-out infinite; outline: 4px solid var(--sun); }
+.tool.dim { opacity: .45; }
+@keyframes nudge { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+
+/* ---------- home: hospital building ---------- */
+.hospital { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; }
+.sign {
+  background: var(--paper); border-radius: 22px 22px 0 0; padding: 8px 26px 4px; box-shadow: var(--shadow);
+  font-weight: 800; font-size: clamp(18px, 3.4vw, 26px); display: flex; align-items: center; gap: 10px;
+}
+.sign b { color: #fff; background: var(--coral); border-radius: 10px; width: 38px; height: 38px; display: grid; place-items: center; font-size: 30px; line-height: 1; }
+.building {
+  width: 100%; flex: 1; min-height: 0; background: #f6fbfa; border-radius: var(--r); box-shadow: var(--shadow);
+  border: 6px solid var(--paper); padding: 14px; display: grid; gap: 14px;
+  grid-template-columns: repeat(3, 1fr); grid-auto-rows: 1fr;
+}
+.door {
+  border-radius: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  font-size: clamp(44px, 8vw, 76px); line-height: 1; position: relative; color: var(--ink);
+  background: var(--c); box-shadow: inset 0 -8px 0 rgba(0,0,0,.12), var(--shadow); min-height: 0;
+  transition: transform .15s;
+}
+.door span { font-size: clamp(16px, 2.6vw, 24px); font-weight: 800; background: rgba(255,255,255,.85); padding: 2px 12px; border-radius: 99px; margin-top: 6px; }
+.door:active { transform: scale(.96); }
+.door .star { position: absolute; top: 6px; right: 10px; font-size: 32px; }
+
+.shelf { display: flex; justify-content: center; gap: 8px; align-items: center; flex-wrap: wrap; }
+.slot {
+  width: 54px; height: 54px; border-radius: 50%; background: rgba(255,255,255,.6); border: 3px dashed var(--line);
+  display: grid; place-items: center; font-size: 30px;
+}
+.slot.got { background: var(--paper); border: 3px solid var(--sun); animation: pop .5s; }
+@keyframes pop { 0% { transform: scale(.3); } 70% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+/* ---------- start screen ---------- */
+.start {
+  position: fixed; inset: 0; z-index: 50; background: var(--bg); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 18px; text-align: center; padding: 24px;
+  background-image: radial-gradient(circle at 20px 20px, rgba(255,255,255,.55) 3px, transparent 4px); background-size: 40px 40px;
+}
+.start h1 { margin: 0; font-size: clamp(36px, 8vw, 72px); line-height: 1; font-weight: 800; text-wrap: balance; }
+.start h1 em { font-style: normal; color: var(--coral); }
+.start p { margin: 0; font-size: clamp(18px, 3vw, 24px); color: var(--ink-soft); max-width: 30em; }
+.play {
+  width: 160px; height: 160px; border-radius: 50%; background: var(--coral); color: #fff; font-size: 72px;
+  box-shadow: 0 10px 0 #c94848; animation: nudge 1.4s ease-in-out infinite; display: grid; place-items: center;
+}
+.play:active { transform: translateY(8px); box-shadow: 0 2px 0 #c94848; }
+
+/* ---------- celebration ---------- */
+.party {
+  position: fixed; inset: 0; z-index: 40; background: rgba(31,59,77,.55); display: grid; place-items: center; padding: 20px;
+}
+.party .card {
+  background: var(--paper); border-radius: 36px; padding: 24px 28px; text-align: center; box-shadow: 0 12px 0 rgba(0,0,0,.2);
+  display: flex; flex-direction: column; align-items: center; gap: 10px; animation: pop .5s; max-width: 92vw;
+}
+.party .big { font-size: 110px; line-height: 1; }
+.party h2 { margin: 0; font-size: clamp(30px, 6vw, 48px); line-height: 1.05; }
+.party .round { width: 90px; height: 90px; font-size: 46px; background: var(--sun); }
+.confetti { position: fixed; top: -60px; font-size: 40px; z-index: 45; pointer-events: none; animation: fall linear forwards; }
+@keyframes fall { to { transform: translateY(115vh) rotate(540deg); } }
+
+/* ---------- room specifics ---------- */
+.readout {
+  position: absolute; top: 14px; right: 14px; background: var(--ink); color: #fff; border-radius: 18px;
+  padding: 6px 16px; font-size: clamp(26px, 5vw, 42px); font-weight: 800; font-variant-numeric: tabular-nums;
+  animation: pop .4s;
+}
+.pulse { animation: beat .55s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes beat { 0%,100% { transform: scale(1); } 30% { transform: scale(1.25); } }
+.blink { animation: blink .35s steps(1) infinite; }
+@keyframes blink { 50% { opacity: .15; } }
+.wobble { animation: wob .5s ease-in-out 2; transform-box: fill-box; transform-origin: center bottom; }
+@keyframes wob { 25% { transform: rotate(-6deg); } 75% { transform: rotate(6deg); } }
+
+/* ambulance */
+.road { position: absolute; inset: 0; background: linear-gradient(#bfe8ff 0 62%, #8fcf7a 62% 70%, #6b7a86 70% 100%); }
+.road::after { content: ""; position: absolute; left: 0; right: 0; top: 84%; height: 8px;
+  background: repeating-linear-gradient(90deg, #fff 0 40px, transparent 40px 80px); }
+.road .hosp { position: absolute; left: 4%; top: 22%; font-size: clamp(60px, 12vw, 110px); }
+.road .bearbox { position: absolute; left: 50%; bottom: 14%; width: clamp(90px, 18vw, 150px); translate: -50% 0; }
+.amb { position: absolute; bottom: 12%; right: -40%; font-size: clamp(90px, 18vw, 160px); line-height: 1; transition: right 2.2s cubic-bezier(.2,.8,.3,1), transform .2s; background: none; padding: 0; }
+.amb .lights { position: absolute; top: 10%; left: 40%; display: flex; gap: 6px; }
+.amb .lights i { width: 18px; height: 18px; border-radius: 50%; background: #ff3b3b; display: block; }
+.amb .lights i + i { background: #3b8bff; animation-delay: .175s; }
+.phone {
+  position: absolute; top: 5%; bottom: 5%; left: 50%; translate: -50% 0; width: min(330px, 86%); background: var(--ink); border-radius: 34px;
+  padding: 14px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 10px 0 rgba(0,0,0,.25);
+}
+.phone .screen { background: #eaf7ff; border-radius: 20px; height: 70px; display: flex; justify-content: center; align-items: center; gap: 12px; font-size: 48px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.phone .screen i { width: 40px; border-bottom: 5px solid var(--ink-soft); text-align: center; font-style: normal; line-height: 1; }
+.keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; flex: 1; min-height: 0; }
+.keys button { border-radius: 50%; background: #3c5a6d; color: #fff; font-size: clamp(24px, 4.5vw, 34px); font-weight: 800; aspect-ratio: 1; max-height: 100%; justify-self: center; height: 100%; max-width: 100%; }
+.keys button.glow { background: var(--sun); color: var(--ink); animation: nudge 1s infinite; }
+.keys button.k0 { grid-column: 2; }
+
+/* handwashing */
+.sink { position: absolute; inset: 0; background: linear-gradient(#e9f7ff 0 72%, #cfe6ef 72%); }
+.sink .basin { position: absolute; left: 10%; right: 10%; bottom: 4%; height: 28%; background: #fff; border-radius: 0 0 50% 50%; border: 6px solid #b9d7e3; }
+.sink .faucet { position: absolute; left: 50%; top: 2%; translate: -50% 0; font-size: 64px; }
+.sink .stream { position: absolute; left: 50%; top: 15%; width: 26px; height: 52%; translate: -50% 0; border-radius: 13px;
+  background: linear-gradient(90deg, #8fd3ff, #d6f0ff, #8fd3ff); opacity: .85; animation: flow .3s linear infinite; }
+@keyframes flow { 50% { opacity: .6; } }
+.sink .hands { position: absolute; left: 50%; top: 52%; translate: -50% -50%; font-size: clamp(120px, 24vw, 210px); line-height: 1; }
+.germ { position: absolute; font-size: clamp(38px, 7vw, 56px); background: none; padding: 6px; line-height: 1; animation: jiggle 1.2s ease-in-out infinite; translate: -50% -50%; }
+@keyframes jiggle { 50% { transform: rotate(18deg) scale(1.1); } }
+.bub { position: absolute; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff, rgba(200,235,255,.7)); border: 2px solid rgba(143,211,255,.9); pointer-events: none; translate: -50% -50%; animation: pop .4s; }
+.sparkle { position: absolute; font-size: 40px; pointer-events: none; translate: -50% -50%; animation: rise 1s ease-out forwards; }
+@keyframes rise { to { transform: translateY(-60px) scale(1.4); opacity: 0; } }
+
+/* rest room */
+.night { position: absolute; inset: 0; background: rgba(20,30,70,.72); opacity: 0; transition: opacity 1s; pointer-events: none; display: flex; justify-content: flex-end; padding: 18px; font-size: 64px; }
+.night.on { opacity: 1; }
+
+@media (max-width: 560px) and (orientation: portrait) {
+  .building { grid-template-columns: repeat(2, 1fr); }
+  .slot { width: 44px; height: 44px; font-size: 24px; }
+  .tool { min-width: 0; width: 64px; height: 76px; padding: 4px; font-size: 34px; border-radius: 20px; }
+  .tool small { font-size: 12px; }
+  .tray { gap: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="bar">
+    <button class="round" id="homeBtn" aria-label="Về bệnh viện" hidden>🏠</button>
+    <div class="title" id="title"><span class="cross">✚</span> Bệnh Viện Gấu Bông</div>
+    <button class="round" id="soundBtn" aria-label="Bật hoặc tắt tiếng">🔊</button>
+  </div>
+  <div class="guide">
+    <div class="nurse" aria-hidden="true">👩‍⚕️</div>
+    <button class="bubble" id="bubble" aria-live="polite"><span class="again" aria-hidden="true">🔁</span><span id="bubbleText">Xin chào bé!</span></button>
+  </div>
+  <div class="stage" id="stage"></div>
+</div>
+
+<div class="start" id="start">
+  <div style="font-size:90px;line-height:1">🏥🧸</div>
+  <h1>Bệnh Viện <em>Gấu Bông</em></h1>
+  <p>Bé làm bác sĩ nhỏ, giúp bạn Gấu Bông khỏe lại và tìm hiểu bệnh viện làm gì.</p>
+  <button class="play" id="playBtn" aria-label="Bắt đầu chơi">▶</button>
+</div>
+
+<script>
+(() => {
+"use strict";
+
+/* ================= storage (best effort) ================= */
+const KEY = "benhvien-gaubong-v1";
+let done = new Set();
+try { done = new Set(JSON.parse(localStorage.getItem(KEY) || "[]")); } catch (e) {}
+function saveDone() { try { localStorage.setItem(KEY, JSON.stringify([...done])); } catch (e) {} }
+
+/* ================= sound ================= */
+let soundOn = true, actx = null;
+function ac() {
+  if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
+  if (actx.state === "suspended") actx.resume();
+  return actx;
+}
+function tone(f, dur = .15, type = "sine", vol = .2, at = 0, f2) {
+  if (!soundOn) return; const c = ac(); if (!c) return;
+  const t = c.currentTime + at, o = c.createOscillator(), g = c.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t);
+  if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .01);
+  g.gain.exponentialRampToValueAtTime(.001, t + dur);
+  o.connect(g).connect(c.destination); o.start(t); o.stop(t + dur + .02);
+}
+function noise(dur = .4, vol = .15, at = 0, freq = 1200) {
+  if (!soundOn) return; const c = ac(); if (!c) return;
+  const b = c.createBuffer(1, c.sampleRate * dur, c.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(), t = c.currentTime + at;
+  s.buffer = b; f.type = "bandpass"; f.frequency.value = freq;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
+  s.connect(f).connect(g).connect(c.destination); s.start(t);
+}
+const sfx = {
+  pop: () => tone(500, .12, "sine", .25, 0, 1000),
+  tap: () => tone(700, .08, "triangle", .15),
+  ding: () => { tone(880, .25, "sine", .2); tone(1320, .35, "sine", .15, .12); },
+  oops: () => tone(300, .2, "sine", .15, 0, 220),
+  cheer: () => [523, 659, 784, 1047, 784, 1047].forEach((f, i) => tone(f, .22, "triangle", .2, i * .11)),
+  heart: () => { for (let i = 0; i < 4; i++) { tone(70, .12, "sine", .6, i * .7); tone(60, .14, "sine", .45, i * .7 + .17); } },
+  siren: () => { for (let i = 0; i < 4; i++) { tone(700, .4, "square", .06, i * .8, 950); tone(950, .4, "square", .06, i * .8 + .4, 700); } },
+  water: () => noise(1.2, .12, 0, 2500),
+  ring: () => { for (let i = 0; i < 2; i++) { tone(440, .35, "sine", .12, i * .55); tone(480, .35, "sine", .12, i * .55); } },
+  scrub: () => noise(.25, .1, 0, 4000),
+  beep: () => tone(1500, .1, "square", .07),
+  zap: () => tone(1200, .6, "sawtooth", .05, 0, 200),
+};
+
+/* ================= voice ================= */
+let viVoice = null;
+function pickVoice() {
+  if (!("speechSynthesis" in window)) return;
+  const vs = speechSynthesis.getVoices();
+  viVoice = vs.find(v => /^vi/i.test(v.lang)) || null;
+}
+if ("speechSynthesis" in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+let lastLine = "";
+function say(text, then) {
+  lastLine = text;
+  const el = document.getElementById("bubbleText");
+  el.textContent = text;
+  const b = document.getElementById("bubble"); b.classList.remove("wobble"); void b.offsetWidth;
+  if (!soundOn || !("speechSynthesis" in window)) { if (then) setTimeout(then, 600 + text.length * 45); return; }
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text.replace(/[^\p{L}\p{N}\s.,!?°]/gu, ""));
+    u.lang = "vi-VN"; if (viVoice) u.voice = viVoice; u.rate = .92; u.pitch = 1.15;
+    let fired = false; const go = () => { if (!fired) { fired = true; then && then(); } };
+    u.onend = go; u.onerror = go;
+    if (then) setTimeout(go, 1500 + text.length * 90); // safety if onend never fires
+    speechSynthesis.speak(u);
+  } catch (e) { if (then) setTimeout(then, 800); }
+}
+
+/* ================= helpers ================= */
+const $ = (s, r = document) => r.querySelector(s);
+const stage = $("#stage");
+let timers = [];
+const later = (fn, ms) => { const t = setTimeout(fn, ms); timers.push(t); return t; };
+function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+function h(html) { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; }
+function svgPoint(svg, e) {
+  const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY;
+  return p.matrixTransform(svg.getScreenCTM().inverse());
+}
+function sparkleAt(parent, x, y, ch = "✨") {
+  const s = h(`<div class="sparkle">${ch}</div>`); s.style.left = x; s.style.top = y;
+  parent.appendChild(s); setTimeout(() => s.remove(), 1000);
+}
+
+/* ================= the bear ================= */
+const FUR = "#c98b5a", LIGHT = "#efcfa9", DARK = "#5a3a22";
+function faceSVG(mood) {
+  const eyes = mood === "sleep"
+    ? `<path d="M70 72 Q78 79 86 72 M114 72 Q122 79 130 72" stroke="${DARK}" stroke-width="4" fill="none" stroke-linecap="round"/>`
+    : `<circle cx="78" cy="72" r="7" fill="${DARK}"/><circle cx="122" cy="72" r="7" fill="${DARK}"/>
+       <circle cx="80" cy="70" r="2.4" fill="#fff"/><circle cx="124" cy="70" r="2.4" fill="#fff"/>`;
+  const brows = (mood === "sad" || mood === "sick")
+    ? `<path d="M68 62 L86 56 M132 62 L114 56" stroke="${DARK}" stroke-width="4" stroke-linecap="round"/>` : "";
+  const mouths = {
+    happy: `<path d="M86 106 Q100 121 114 106" stroke="${DARK}" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+    sad: `<path d="M88 116 Q100 105 112 116" stroke="${DARK}" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+    sick: `<path d="M88 114 Q94 109 100 114 Q106 119 112 114" stroke="${DARK}" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+    open: `<ellipse cx="100" cy="113" rx="11" ry="14" fill="#7a2e2e"/><ellipse cx="100" cy="121" rx="7" ry="4.5" fill="#ff8a8a"/>`,
+    sleep: `<path d="M93 110 Q100 114 107 110" stroke="${DARK}" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+  };
+  const cheeks = mood === "sick" ? "#ff5a5a" : "#ff9a9a";
+  return `${eyes}${brows}
+    <circle cx="66" cy="96" r="9" fill="${cheeks}" opacity="${mood === "sick" ? .75 : .5}"/>
+    <circle cx="134" cy="96" r="9" fill="${cheeks}" opacity="${mood === "sick" ? .75 : .5}"/>
+    <ellipse cx="100" cy="91" rx="9" ry="6.5" fill="${DARK}"/>
+    ${mouths[mood] || mouths.happy}`;
+}
+function bearSVG({ mood = "happy", extra = "", under = "", vb = "0 0 200 280", cls = "main" } = {}) {
+  return `<svg class="${cls}" viewBox="${vb}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+    ${under}
+    <g class="bear">
+      <ellipse cx="70" cy="250" rx="24" ry="17" fill="${FUR}"/><ellipse cx="130" cy="250" rx="24" ry="17" fill="${FUR}"/>
+      <ellipse cx="70" cy="254" rx="13" ry="9" fill="${LIGHT}"/><ellipse cx="130" cy="254" rx="13" ry="9" fill="${LIGHT}"/>
+      <ellipse cx="44" cy="172" rx="18" ry="34" fill="${FUR}" transform="rotate(25 44 172)"/>
+      <ellipse cx="156" cy="172" rx="18" ry="34" fill="${FUR}" transform="rotate(-25 156 172)"/>
+      <ellipse cx="100" cy="192" rx="56" ry="62" fill="${FUR}"/>
+      <ellipse cx="100" cy="200" rx="36" ry="42" fill="${LIGHT}"/>
+      <circle cx="54" cy="40" r="22" fill="${FUR}"/><circle cx="146" cy="40" r="22" fill="${FUR}"/>
+      <circle cx="54" cy="40" r="11" fill="${LIGHT}"/><circle cx="146" cy="40" r="11" fill="${LIGHT}"/>
+      <circle cx="100" cy="82" r="56" fill="${FUR}"/>
+      <ellipse cx="100" cy="102" rx="27" ry="21" fill="${LIGHT}"/>
+      <g class="face">${faceSVG(mood)}</g>
+    </g>
+    ${extra}
+  </svg>`;
+}
+function setFace(root, mood) { const f = root.querySelector(".face"); if (f) f.innerHTML = faceSVG(mood); }
+
+/* ================= rooms ================= */
+const ROOMS = [
+  { id: "cuu-thuong", name: "Xe cứu thương", icon: "🚑", c: "#ffb3b3", run: roomAmbulance },
+  { id: "rua-tay", name: "Rửa tay", icon: "🧼", c: "#bfe6ff", run: roomWash },
+  { id: "kham", name: "Phòng khám", icon: "🩺", c: "#a8e6dc", run: roomCheckup },
+  { id: "x-quang", name: "Chụp X-quang", icon: "🦴", c: "#c9cff7", run: roomXray },
+  { id: "bang-bo", name: "Băng bó", icon: "🩹", c: "#ffd7a8", run: roomBandage },
+  { id: "nghi", name: "Phòng nghỉ", icon: "🛏️", c: "#dccaff", run: roomRest },
+];
+
+function setTitle(html) { $("#title").innerHTML = html; }
+
+function showHome(greet = true) {
+  clearTimers(); stage.innerHTML = "";
+  $("#homeBtn").hidden = true;
+  setTitle(`<span class="cross">✚</span> Bệnh Viện Gấu Bông`);
+  const wrap = h(`<div class="hospital">
+      <div class="sign"><b>+</b> BỆNH VIỆN</div>
+      <div class="building"></div>
+    </div>`);
+  const bld = $(".building", wrap);
+  ROOMS.forEach(r => {
+    const d = h(`<button class="door" style="--c:${r.c}" aria-label="${r.name}">
+        ${r.icon}<span>${r.name}</span>${done.has(r.id) ? '<i class="star">⭐</i>' : ""}</button>`);
+    d.addEventListener("click", () => { sfx.tap(); openRoom(r); });
+    bld.appendChild(d);
+  });
+  stage.appendChild(wrap);
+  const shelf = h(`<div class="shelf" aria-label="Huy hiệu của bé"></div>`);
+  ROOMS.forEach(r => shelf.appendChild(h(`<div class="slot ${done.has(r.id) ? "got" : ""}">${done.has(r.id) ? r.icon : ""}</div>`)));
+  stage.appendChild(shelf);
+  if (greet) {
+    const left = ROOMS.length - done.size;
+    say(left === ROOMS.length ? "Bạn Gấu Bông bị ốm rồi. Bé chạm vào một phòng để giúp bạn ấy nhé!"
+      : left === 0 ? "Bé đã giúp bạn Gấu ở mọi phòng. Bé là bác sĩ giỏi nhất! Chơi lại phòng nào cũng được nhé."
+      : `Giỏi lắm! Còn ${left} phòng nữa. Bé chọn phòng nào?`);
+  }
+}
+
+function openRoom(r) {
+  clearTimers(); stage.innerHTML = "";
+  $("#homeBtn").hidden = false;
+  setTitle(`${r.icon} ${r.name}`);
+  r.run(r);
+}
+
+function finish(r, line) {
+  const first = !done.has(r.id);
+  done.add(r.id); saveDone(); sfx.cheer();
+  const all = done.size === ROOMS.length && first;
+  const p = h(`<div class="party" role="dialog" aria-label="Hoàn thành">
+     <div class="card">
+       <div class="big">${all ? "🏆" : r.icon}</div>
+       <h2>${all ? "Bé là bác sĩ giỏi!" : "Giỏi quá!"}</h2>
+       <div style="font-size:42px">⭐⭐⭐</div>
+       <button class="round" aria-label="Về bệnh viện">🏠</button>
+     </div></div>`);
+  document.body.appendChild(p);
+  for (let i = 0; i < 22; i++) {
+    const c = h(`<div class="confetti">${["⭐", "🎈", "💖", "🌟", "🎉"][i % 5]}</div>`);
+    c.style.left = Math.random() * 100 + "vw"; c.style.animationDuration = 2 + Math.random() * 2.5 + "s";
+    c.style.animationDelay = Math.random() * .8 + "s";
+    document.body.appendChild(c); setTimeout(() => c.remove(), 5500);
+  }
+  say(all ? "Hoan hô! Bé đã giúp bạn Gấu ở tất cả các phòng. Bé là bác sĩ nhỏ giỏi nhất!" : line + " Bé được một ngôi sao!");
+  $(".round", p).addEventListener("click", () => { sfx.tap(); p.remove(); showHome(); });
+}
+
+/* tool tray helper: steps run in order; the next one glows */
+function makeTray(steps, onAll) {
+  const tray = h(`<div class="tray"></div>`);
+  let i = 0;
+  const btns = steps.map((s, k) => {
+    const b = h(`<button class="tool" aria-label="${s.label}">${s.icon}<small>${s.label}</small></button>`);
+    b.addEventListener("click", () => {
+      if (b.classList.contains("done") || tray.dataset.busy) return;
+      if (k !== i && steps.ordered !== false) { sfx.oops(); say(`Chưa đâu bé ơi. Chạm vào ${steps[i].label} trước nhé!`); return; }
+      sfx.tap(); tray.dataset.busy = "1";
+      s.act(() => {
+        delete tray.dataset.busy; b.classList.add("done"); b.classList.remove("next");
+        i = steps.findIndex((_, j) => !btns[j].classList.contains("done"));
+        if (i === -1) { later(onAll, 600); } else refresh();
+      });
+    });
+    return b;
+  });
+  function refresh() {
+    btns.forEach((b, k) => {
+      b.classList.toggle("next", k === i && steps.ordered !== false);
+      b.classList.toggle("dim", steps.ordered !== false && k !== i && !b.classList.contains("done"));
+    });
+  }
+  btns.forEach(b => tray.appendChild(b)); refresh();
+  return tray;
+}
+
+/* ---------- 1. Ambulance: call 115 ---------- */
+function roomAmbulance(r) {
+  const scene = h(`<div class="scene"><div class="road">
+      <div class="hosp">🏥</div>
+      <div class="bearbox">${bearSVG({ mood: "sad", cls: "" })}</div>
+      <button class="amb" aria-label="Xe cứu thương"><div class="lights"><i class="blink"></i><i class="blink"></i></div>🚑</button>
+    </div></div>`);
+  stage.appendChild(scene);
+  const bearbox = $(".bearbox", scene), amb = $(".amb", scene);
+  const tray = h(`<div class="tray"><button class="tool next" aria-label="Gọi điện">📞<small>Gọi điện</small></button></div>`);
+  stage.appendChild(tray);
+  say("Ối! Bạn Gấu bị ngã đau chân rồi. Bé chạm vào điện thoại để gọi cấp cứu nhé!");
+  let stage2 = false;
+  $(".tool", tray).addEventListener("click", () => {
+    if (stage2) return; stage2 = true; sfx.tap(); tray.remove();
+    const phone = h(`<div class="phone"><div class="screen"><i></i><i></i><i></i></div><div class="keys"></div></div>`);
+    const keys = $(".keys", phone);
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].forEach(n => keys.appendChild(h(`<button class="${n === 0 ? "k0" : ""}" data-n="${n}">${n}</button>`)));
+    scene.appendChild(phone);
+    const target = [1, 1, 5]; let pos = 0;
+    const glow = () => keys.querySelectorAll("button").forEach(b => b.classList.toggle("glow", +b.dataset.n === target[pos]));
+    glow();
+    say("Số cấp cứu là một, một, năm. Bé bấm nút đang sáng nhé!");
+    keys.addEventListener("click", e => {
+      const b = e.target.closest("button"); if (!b || pos >= 3) return;
+      if (+b.dataset.n !== target[pos]) { sfx.oops(); say(`Bé bấm số ${["một", "một", "năm"][pos]} nhé!`); return; }
+      sfx.beep(); phone.querySelectorAll(".screen i")[pos].textContent = target[pos];
+      say(["Một", "Một", "Năm"][pos]); pos++; glow();
+      if (pos === 3) {
+        later(() => { sfx.ring(); }, 400);
+        later(() => say("A lô, cấp cứu một một năm xin nghe! Xe cứu thương đến ngay đây!", () => {
+          phone.remove(); sfx.siren(); amb.style.right = "8%";
+          later(() => say("Xe cứu thương đến rồi! Bé chạm vào xe để đưa bạn Gấu vào bệnh viện nhé!"), 2300);
+          amb.classList.add("next");
+          amb.onclick = () => {
+            amb.onclick = null; sfx.siren(); bearbox.style.transition = "opacity .6s"; bearbox.style.opacity = "0";
+            later(() => { amb.style.transition = "right 2.4s ease-in"; amb.style.right = "130%"; }, 700);
+            later(() => finish(r, "Cảm ơn bé! Xe cứu thương đã đưa bạn Gấu đến bệnh viện. Nhớ nhé, số cấp cứu là một một năm."), 3000);
+          };
+        }), 1600);
+      }
+    });
+  });
+}
+
+/* ---------- 2. Handwashing ---------- */
+function roomWash(r) {
+  const scene = h(`<div class="scene"><div class="sink">
+      <div class="faucet">🚰</div><div class="stream" hidden></div><div class="basin"></div>
+      <div class="hands">🤲</div>
+    </div></div>`);
+  stage.appendChild(scene);
+  const sink = $(".sink", scene), stream = $(".stream", scene);
+  const germSpots = [[38, 42], [60, 38], [46, 62], [64, 60], [52, 50]];
+  let germs = [];
+  function addGerms() {
+    germSpots.forEach(([x, y]) => {
+      const g = h(`<button class="germ" aria-label="Vi trùng">🦠</button>`);
+      g.style.left = x + "%"; g.style.top = y + "%"; sink.appendChild(g); germs.push(g);
+    });
+  }
+  addGerms();
+  function bubbles(n = 14) {
+    for (let i = 0; i < n; i++) {
+      const s = 18 + Math.random() * 34, b = h(`<div class="bub"></div>`);
+      b.style.width = b.style.height = s + "px"; b.style.left = 32 + Math.random() * 36 + "%"; b.style.top = 34 + Math.random() * 36 + "%";
+      sink.appendChild(b);
+    }
+  }
+  const steps = [
+    { icon: "💧", label: "Làm ướt", act: ok => { stream.hidden = false; sfx.water(); say("Mở nước, làm ướt hai tay nào!"); later(() => { stream.hidden = true; ok(); }, 1600); } },
+    { icon: "🧼", label: "Xà phòng", act: ok => { sfx.pop(); bubbles(); say("Xoa xà phòng, bọt trắng xóa!"); later(ok, 1200); } },
+    {
+      icon: "👐", label: "Chà tay", act: ok => {
+        say("Có vi trùng kìa! Bé chạm vào từng con vi trùng để chà sạch nhé!");
+        let left = germs.length;
+        germs.forEach(g => g.addEventListener("click", () => {
+          sfx.scrub(); sparkleAt(sink, g.style.left, g.style.top, "🫧"); g.remove(); left--;
+          if (left > 0) say(["Một", "Hai", "Ba", "Bốn", "Năm"][germs.length - left - 1] + "!");
+          else { say("Hết vi trùng rồi! Sạch quá!"); later(ok, 900); }
+        }, { once: true }));
+      }
+    },
+    { icon: "🚿", label: "Xả nước", act: ok => { stream.hidden = false; sfx.water(); say("Xả sạch bọt xà phòng nào!"); later(() => { sink.querySelectorAll(".bub").forEach(b => b.remove()); }, 900); later(() => { stream.hidden = true; ok(); }, 1600); } },
+    { icon: "🧻", label: "Lau khô", act: ok => { sfx.ding(); ["30%", "50%", "70%"].forEach((x, i) => later(() => sparkleAt(sink, x, "45%"), i * 200)); say("Lau khô tay. Tay bé sạch tinh tươm!"); later(ok, 1300); } },
+  ];
+  stage.appendChild(makeTray(steps, () => finish(r, "Bác sĩ luôn rửa tay trước khi khám bệnh để không lây vi trùng. Bé cũng rửa tay thật sạch nhé!")));
+  say("Trước khi khám bệnh, bác sĩ phải rửa tay. Bé chạm vào giọt nước nhé!");
+}
+
+/* ---------- 3. Check-up ---------- */
+function roomCheckup(r) {
+  const extra = `
+    <g id="thermo" hidden>
+      <rect x="112" y="104" width="60" height="10" rx="5" fill="#fff" stroke="#8aa" stroke-width="2" transform="rotate(-15 112 109)"/>
+      <rect x="120" y="106" width="40" height="5" rx="2.5" fill="#ff4d4d" transform="rotate(-15 112 109)"/>
+      <circle cx="113" cy="110" r="7" fill="#ff4d4d"/>
+    </g>
+    <g id="steth" hidden>
+      <path d="M60 130 Q56 170 100 172" stroke="#3a4a5a" stroke-width="5" fill="none"/>
+      <circle cx="100" cy="176" r="13" fill="#9fb3c4" stroke="#3a4a5a" stroke-width="4"/>
+      <path class="pulse" d="M100 214 C70 196 72 168 88 168 C95 168 100 174 100 178 C100 174 105 168 112 168 C128 168 130 196 100 214 Z" fill="#ff4d6d" transform="translate(0 4)"/>
+    </g>
+    <g id="light" hidden>
+      <polygon points="200,60 200,140 108,116 108,108" fill="#ffe680" opacity=".55"/>
+    </g>
+    <g id="scale" hidden>
+      <rect x="30" y="258" width="140" height="20" rx="8" fill="#9fb3c4"/>
+      <rect x="80" y="262" width="40" height="12" rx="3" fill="#1f3b4d"/>
+    </g>`;
+  const scene = h(`<div class="scene">${bearSVG({ mood: "sick", extra })}</div>`);
+  stage.appendChild(scene);
+  const svg = $("svg", scene);
+  const show = (id, on = true) => { svg.querySelector("#" + id).toggleAttribute("hidden", !on); };
+  let readout = null;
+  const read = txt => { readout && readout.remove(); readout = h(`<div class="readout">${txt}</div>`); scene.appendChild(readout); };
+  const hideAll = () => { ["thermo", "steth", "light", "scale"].forEach(i => show(i, false)); readout && readout.remove(); setFace(svg, "sick"); };
+  const steps = [
+    { icon: "🌡️", label: "Nhiệt độ", act: ok => { hideAll(); show("thermo"); sfx.beep(); later(() => { sfx.beep(); read("38°C 🔥"); say("Ba mươi tám độ. Người bạn Gấu nóng quá, bạn ấy bị sốt rồi!", ok); }, 1200); } },
+    { icon: "🩺", label: "Nghe tim", act: ok => { hideAll(); show("steth"); sfx.heart(); read("💓"); say("Nghe tim nào. Thình thịch, thình thịch! Tim bạn Gấu khỏe lắm.", ok); } },
+    { icon: "🔦", label: "Xem họng", act: ok => { hideAll(); show("light"); setFace(svg, "open"); say("Há miệng ra nào, A a a! Cổ họng hơi đỏ một chút.", ok); } },
+    { icon: "⚖️", label: "Cân nặng", act: ok => { hideAll(); show("scale"); sfx.ding(); read("16 kg"); say("Bạn Gấu đứng lên cân. Mười sáu ký!", ok); } },
+  ];
+  stage.appendChild(makeTray(steps, () => { hideAll(); finish(r, "Bác sĩ khám xong rồi. Bạn Gấu bị cảm, cần uống thuốc và nghỉ ngơi."); }));
+  say("Bạn Gấu thấy mệt. Bác sĩ nhỏ ơi, mình khám cho bạn ấy nhé! Đầu tiên là đo nhiệt độ.");
+}
+
+/* ---------- 4. X-ray ---------- */
+function roomXray(r) {
+  const BONE = "#eaf6ff";
+  let ribs = "";
+  for (let i = 0; i < 4; i++) {
+    const y = 148 + i * 15;
+    ribs += `<path d="M100 ${y} Q74 ${y - 4} 66 ${y + 12} M100 ${y} Q126 ${y - 4} 134 ${y + 12}" stroke="${BONE}" stroke-width="6" fill="none" stroke-linecap="round"/>`;
+  }
+  let spine = "";
+  for (let y = 132; y <= 226; y += 12) spine += `<rect x="94" y="${y}" width="12" height="9" rx="3" fill="${BONE}"/>`;
+  const svgStr = `<svg class="main" viewBox="0 0 200 280" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="touch-action:none">
+    <defs><clipPath id="lens"><circle id="lensC" cx="100" cy="140" r="44"/></clipPath></defs>
+    <rect x="-400" y="-400" width="1000" height="1100" fill="#0b1a2e"/>
+    <g fill="#1f4068">
+      <ellipse cx="70" cy="250" rx="24" ry="17"/><ellipse cx="130" cy="250" rx="24" ry="17"/>
+      <ellipse cx="44" cy="172" rx="18" ry="34" transform="rotate(25 44 172)"/><ellipse cx="156" cy="172" rx="18" ry="34" transform="rotate(-25 156 172)"/>
+      <ellipse cx="100" cy="192" rx="56" ry="62"/><circle cx="54" cy="40" r="22"/><circle cx="146" cy="40" r="22"/><circle cx="100" cy="82" r="56"/>
+    </g>
+    <g clip-path="url(#lens)">
+      <rect x="-400" y="-400" width="1000" height="1100" fill="#16365a"/>
+      <ellipse cx="100" cy="80" rx="40" ry="37" fill="${BONE}"/>
+      <circle cx="84" cy="76" r="10" fill="#16365a"/><circle cx="116" cy="76" r="10" fill="#16365a"/>
+      <path d="M100 88 l-5 9 h10 z" fill="#16365a"/>
+      <rect x="80" y="108" width="40" height="12" rx="4" fill="${BONE}"/>
+      ${spine}${ribs}
+      <ellipse cx="100" cy="234" rx="30" ry="11" fill="none" stroke="${BONE}" stroke-width="6"/>
+      <line x1="64" y1="150" x2="36" y2="198" stroke="${BONE}" stroke-width="8" stroke-linecap="round"/>
+      <line x1="136" y1="150" x2="164" y2="198" stroke="${BONE}" stroke-width="8" stroke-linecap="round"/>
+      <line x1="80" y1="240" x2="68" y2="262" stroke="${BONE}" stroke-width="9" stroke-linecap="round"/>
+      <line x1="120" y1="240" x2="125" y2="250" stroke="${BONE}" stroke-width="9" stroke-linecap="round"/>
+      <line x1="128" y1="255" x2="132" y2="264" stroke="${BONE}" stroke-width="9" stroke-linecap="round"/>
+      <path id="crack" d="M118 252 l6 -5 l2 6 l6 -4 l2 6" stroke="#ff4d4d" stroke-width="3.5" fill="none" stroke-linejoin="round"/>
+    </g>
+    <circle id="lensRing" cx="100" cy="140" r="44" fill="none" stroke="#8fd3ff" stroke-width="3" stroke-dasharray="6 5"/>
+  </svg>`;
+  const scene = h(`<div class="scene" style="background:#0b1a2e">${svgStr}</div>`);
+  stage.appendChild(scene);
+  const svg = $("svg", scene), lens = $("#lensC", svg), ring = $("#lensRing", svg);
+  const BREAK = { x: 126, y: 252 };
+  let found = false, hinted = false, dragging = false;
+  function moveTo(p) {
+    const x = Math.max(10, Math.min(190, p.x)), y = Math.max(10, Math.min(272, p.y));
+    lens.setAttribute("cx", x); lens.setAttribute("cy", y); ring.setAttribute("cx", x); ring.setAttribute("cy", y);
+    if (!found && Math.hypot(x - BREAK.x, y - BREAK.y) < 24) win();
+  }
+  svg.addEventListener("pointerdown", e => { dragging = true; svg.setPointerCapture(e.pointerId); moveTo(svgPoint(svg, e)); });
+  svg.addEventListener("pointermove", e => { if (dragging) moveTo(svgPoint(svg, e)); });
+  svg.addEventListener("pointerup", () => { dragging = false; });
+  // gentle hint for little ones
+  later(() => { if (!found) { hinted = true; say("Gợi ý nè: bạn Gấu bị đau ở chân. Bé kéo vòng tròn xuống chân xem nào!"); } }, 14000);
+  function win() {
+    found = true; sfx.zap(); $("#crack", svg).classList.add("blink");
+    say("Tìm thấy rồi! Xương chân bị gãy. Bác sĩ sẽ bó bột để xương lành lại nhé.", () => {
+      const cast = `<g class="cast" style="animation:pop .5s">
+          <rect x="104" y="224" width="52" height="42" rx="16" fill="#fff" stroke="#cfd8dc" stroke-width="3"/>
+          <text x="118" y="250" font-size="14">⭐</text><text x="134" y="260" font-size="11">💙</text></g>`;
+      scene.style.background = "";
+      scene.innerHTML = bearSVG({ mood: "happy", extra: cast });
+      sfx.ding();
+      later(() => finish(r, "Máy X-quang giúp bác sĩ nhìn thấy xương bên trong cơ thể. Không đau chút nào!"), 1800);
+    });
+  }
+  say("Đây là máy chụp X-quang, nhìn thấy được xương bên trong! Bé kéo vòng tròn để tìm chỗ xương bị gãy nhé.");
+}
+
+/* ---------- 5. Bandages ---------- */
+function roomBandage(r) {
+  const spots = [{ x: 122, y: 50, a: -20 }, { x: 40, y: 176, a: 30 }, { x: 82, y: 214, a: -10 }, { x: 132, y: 248, a: 15 }];
+  const extra = spots.map((s, i) => `
+    <g class="spot" data-i="${i}" style="cursor:pointer">
+      <circle cx="${s.x}" cy="${s.y}" r="26" fill="transparent"/>
+      <g class="scrape"><ellipse cx="${s.x}" cy="${s.y}" rx="11" ry="8" fill="#e5484d"/><ellipse cx="${s.x - 2}" cy="${s.y - 1}" rx="5" ry="3" fill="#ff8f8f"/></g>
+      <g class="band" hidden transform="rotate(${s.a} ${s.x} ${s.y})">
+        <rect x="${s.x - 22}" y="${s.y - 9}" width="44" height="18" rx="8" fill="#f2c094"/>
+        <rect x="${s.x - 8}" y="${s.y - 7}" width="16" height="14" rx="3" fill="#fff0de"/>
+        <circle cx="${s.x - 15}" cy="${s.y - 3}" r="1.4" fill="#c98b5a"/><circle cx="${s.x - 15}" cy="${s.y + 3}" r="1.4" fill="#c98b5a"/>
+        <circle cx="${s.x + 15}" cy="${s.y - 3}" r="1.4" fill="#c98b5a"/><circle cx="${s.x + 15}" cy="${s.y + 3}" r="1.4" fill="#c98b5a"/>
+      </g>
+    </g>`).join("");
+  const scene = h(`<div class="scene">${bearSVG({ mood: "sad", extra })}</div>`);
+  stage.appendChild(scene);
+  const svg = $("svg", scene);
+  let count = 0;
+  svg.querySelectorAll(".spot").forEach(g => {
+    g.addEventListener("click", () => {
+      if (g.dataset.done) return; g.dataset.done = "1";
+      const s = spots[+g.dataset.i], rect = svg.getBoundingClientRect(), sr = scene.getBoundingClientRect();
+      const pt = svg.createSVGPoint(); pt.x = s.x; pt.y = s.y; const sp = pt.matrixTransform(svg.getScreenCTM());
+      sparkleAt(scene, sp.x - sr.left + "px", sp.y - sr.top + "px", "💦");
+      sfx.water();
+      setTimeout(() => {
+        g.querySelector(".scrape").setAttribute("hidden", ""); g.querySelector(".band").removeAttribute("hidden");
+        g.querySelector(".band").style.animation = "pop .4s"; sfx.pop(); count++;
+        if (count < spots.length) say(["Một", "Hai", "Ba"][count - 1] + "! Rửa sạch vết thương, rồi dán băng.");
+        else {
+          setFace(svg, "happy"); say("Bốn! Dán xong hết rồi. Bạn Gấu hết đau rồi!");
+          later(() => finish(r, "Khi bị trầy xước, mình rửa sạch rồi dán băng để vết thương mau lành."), 1600);
+        }
+      }, 450);
+      void rect;
+    });
+  });
+  say("Bạn Gấu bị trầy xước bốn chỗ. Bé tìm chỗ màu đỏ và chạm vào để dán băng nhé!");
+}
+
+/* ---------- 6. Rest room ---------- */
+function roomRest(r) {
+  const under = `<rect x="-60" y="150" width="320" height="140" rx="10" fill="#e8f0f7"/><rect x="-60" y="140" width="40" height="150" rx="8" fill="#b48cf2"/>
+    <rect x="220" y="140" width="40" height="150" rx="8" fill="#b48cf2"/><ellipse cx="100" cy="40" rx="80" ry="30" fill="#fff" opacity=".9" transform="translate(0 60)"/>`;
+  const extra = `<g id="blanket"><rect x="-40" y="170" width="280" height="110" rx="20" fill="#8fd3ff"/>
+      <g fill="#ffffff" opacity=".7"><circle cx="20" cy="210" r="7"/><circle cx="70" cy="240" r="7"/><circle cx="130" cy="205" r="7"/><circle cx="180" cy="240" r="7"/></g></g>
+    <g id="cup" hidden><rect x="160" y="112" width="26" height="34" rx="5" fill="#fff" stroke="#9fb3c4" stroke-width="3"/><rect x="163" y="122" width="20" height="21" rx="3" fill="#8fd3ff"/></g>
+    <g id="spoon" hidden><ellipse cx="128" cy="116" rx="14" ry="9" fill="#d0d8e0"/><ellipse cx="128" cy="116" rx="9" ry="5" fill="#ff8ab0"/><rect x="140" y="113" width="44" height="6" rx="3" fill="#d0d8e0"/></g>
+    <text id="zzz" x="150" y="30" font-size="28" font-weight="800" fill="#ffffff" hidden>z z Z</text>`;
+  const scene = h(`<div class="scene">${bearSVG({ mood: "sick", under, extra, vb: "0 0 200 280" })}<div class="night">🌙</div></div>`);
+  stage.appendChild(scene);
+  const svg = $("svg", scene), night = $(".night", scene);
+  const toggle = (id, on) => svg.querySelector("#" + id).toggleAttribute("hidden", !on);
+  const steps = [
+    { icon: "💊", label: "Uống thuốc", act: ok => { toggle("spoon", true); setFace(svg, "open"); sfx.pop(); say("Uống thuốc bác sĩ cho nào. Nhớ nhé, chỉ uống thuốc khi bác sĩ hoặc bố mẹ đưa cho mình thôi!", () => { toggle("spoon", false); setFace(svg, "sick"); ok(); }); } },
+    { icon: "🥛", label: "Uống nước", act: ok => { toggle("cup", true); sfx.water(); say("Uống thật nhiều nước để mau khỏe. Ực ực!", () => { toggle("cup", false); ok(); }); } },
+    { icon: "💡", label: "Tắt đèn", act: ok => { night.classList.add("on"); setFace(svg, "sleep"); toggle("zzz", true); say("Tắt đèn đi ngủ nào. Chúc bạn Gấu ngủ ngon!", ok); } },
+  ];
+  const tray = makeTray(steps, () => {
+    later(() => {
+      night.innerHTML = "☀️"; night.classList.remove("on"); toggle("zzz", false); setFace(svg, "happy");
+      svg.querySelector("#blanket").style.transform = "translateY(60px)"; svg.querySelector("#blanket").style.transition = "transform 1s";
+      sfx.ding();
+      say("Ò ó o! Trời sáng rồi. Bạn Gấu khỏe rồi!", () => finish(r, "Ngủ đủ giấc, uống thuốc đúng cách giúp mình mau khỏe. Bạn Gấu được về nhà rồi!"));
+    }, 1800);
+  });
+  stage.appendChild(tray);
+  say("Bạn Gấu cần nghỉ ngơi ở bệnh viện. Bé chăm sóc bạn ấy nhé! Đầu tiên là uống thuốc.");
+}
+
+/* ================= wiring ================= */
+$("#homeBtn").addEventListener("click", () => {
+  sfx.tap(); document.querySelectorAll(".party, .confetti").forEach(n => n.remove()); showHome();
+});
+$("#bubble").addEventListener("click", () => say(lastLine));
+$("#soundBtn").addEventListener("click", () => {
+  soundOn = !soundOn; $("#soundBtn").textContent = soundOn ? "🔊" : "🔇";
+  if (!soundOn && "speechSynthesis" in window) speechSynthesis.cancel(); else sfx.tap();
+});
+$("#playBtn").addEventListener("click", () => {
+  ac(); sfx.cheer(); $("#start").remove(); showHome();
+});
+showHome(false);
+})();
+</script>
+</body>
+</html>

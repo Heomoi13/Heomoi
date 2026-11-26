@@ -16,7 +16,7 @@ install -m 0755 "$SRC"/bin/*.sh /opt/homelab/bin/
 install -m 0644 "$SRC/config/excludes.txt" "$SRC/config/restic-excludes.txt" /etc/homelab/
 install -m 0644 "$SRC/config/logrotate-homelab" /etc/logrotate.d/homelab
 
-install -m 0644 "$SRC"/systemd/*.service "$SRC"/systemd/*.timer /etc/systemd/system/
+install -m 0644 "$SRC"/systemd/*.service "$SRC"/systemd/*.timer "$SRC"/systemd/*.path /etc/systemd/system/
 install -d /etc/systemd/system/docker.service.d
 install -m 0644 "$SRC/systemd/docker.service.d/10-homelab-remote-fs.conf" /etc/systemd/system/docker.service.d/
 systemctl daemon-reload

@@ -49,7 +49,7 @@ case $cmd in
   monitor)
     case $arg in storage|nas-health) "$BIN/monitor.sh" "$arg" ;; *) die "monitor storage|nas-health" ;; esac ;;
   ups-status) upsc ups@localhost 2>&1 | grep -E 'battery\.(charge|runtime)|ups\.(status|load)' ;;
-  ups-dry-run) "$BIN/nut-shutdown.sh" --dry-run ;;
+  ups-dry-run) "$BIN/nut-shutdown.sh" fsd --dry-run ;;
   logs)
     case $arg in seed|backup-local|backup-mac|maintain|monitor-storage|nas-health|restore-drill)
       journalctl -u "homelab-$arg.service" -n 80 --no-pager ;;

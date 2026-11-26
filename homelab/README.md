@@ -45,7 +45,7 @@
   (đã kiểm User Management và File Service, 22/11/2026). Vì vậy:
   - Giám sát RAID/SMART của NAS dùng **thông báo có sẵn của UGOS** (app UGREEN NAS / email), **không bật** `homelab-nas-health.timer`.
   - Server vẫn tự giám sát phía mình: `homelab-monitor-storage` (mount `/srv/nas`) và Healthchecks của các job backup.
-  - GĐ2: lệnh tắt NAS qua SSH trong `nut-shutdown.sh` sẽ không chạy được → dùng chức năng UPS của UGOS (NUT client hoặc tự tắt khi mất điện).
+  - GĐ2: không tắt NAS qua SSH nữa — NAS là NUT secondary của server, nhận lệnh FSD (đã viết lại GĐ2, 26/11/2026).
   - GĐ3/6: `nas-precheck.sh` không đọc được `/proc/mdstat` của NAS → kiểm tra RAID và SMART trên giao diện UGOS (Storage Manager).
 
 ## 2. Quy tắc bắt buộc cho Hermes
@@ -255,47 +255,87 @@ Cron `backup_to_mac.sh` 02:30 **giữ nguyên** đến giai đoạn 5.
 
 ## Giai đoạn 2 — UPS và tắt máy có thứ tự
 
-**Vì sao:** mất điện lúc mdadm/Btrfs đang ghi là cách nhanh nhất để hỏng RAID, và GĐ3 (rebuild 7–8 giờ) rất nhạy cảm.
-Sau GĐ4, Immich ghi qua NFS lên NAS → **server phải tắt trước NAS**, nên server điều khiển thứ tự tắt.
+**Thiết bị:** CyberPower **VP1600ELCD** (1600VA/960W, line-interactive, AVR, sóng sin mô phỏng, 2 × 12V 9Ah, cổng USB HID).
+Đặt 26/11/2026, giao 5/12/2026.
+
+**Vì sao:** mất điện lúc mdadm/Btrfs/Postgres đang ghi là cách nhanh nhất để hỏng dữ liệu; GĐ3 (rebuild 7–8 giờ) cần UPS.
+Sau GĐ4 Immich ghi qua NFS lên NAS → **phải dừng mọi thứ ghi lên NAS trước khi NAS tắt**.
+
+**Thiết kế (thay bản cũ dùng SSH vào NAS — UGOS không cho):**
+
+```
+Mất điện ──▶ upssched đếm 3 phút ──(có điện lại → huỷ, không làm gì)
+                     │ hết 3 phút
+                     ▼
+  nut-upssched-cmd.sh (user nut) tạo /run/nut/homelab-fsd-request
+                     ▼
+  homelab-ups-fsd.path → homelab-ups-fsd.service (root): nut-shutdown.sh fsd
+     1. cờ /run/homelab-maintenance   2. dừng mọi container   3. gỡ NFS   4. upsmon -c fsd
+                     ▼
+  NAS (NUT secondary qua mạng) nhận FSD → tự tắt → ngắt kết nối NUT
+                     ▼
+  server: SHUTDOWNCMD = nut-shutdown.sh final → tắt
+                     ▼
+  UPS cắt điện ổ cắm sau 60 s · có điện lưới lại → bật ổ cắm sau 120 s → NAS + server tự khởi động
+  (server chờ NAS tối đa 5 phút cho /srv/nas — đã có từ GĐ4)
+```
+
+Dự phòng: pin yếu trước khi hết 3 phút (pin chai) → upsmon tự FSD → `final` tự làm bước 1–3.
+Lần mất điện ngắn (< 3 phút): chỉ có 2 tin Telegram "mất điện" / "có điện lại", không tắt gì.
+
+**2.0 👤 Khi nhận hàng:** sạc đầy ~8 giờ trước khi cắm thiết bị.
 
 **2.1 👤 Phần cứng:**
-- UPS line-interactive ~1000VA, có cổng USB, ưu tiên sóng sin chuẩn (pure sine) nếu PSU server có Active PFC.
-- Cắm vào UPS: **homeserver, NAS, router Deco** (Deco giữ Internet để còn gửi được Telegram). Tải ~100–150W → ~10–15 phút.
+- Cụm 3 ổ **"Surge + Battery"**: **homeserver, NAS, Deco chính** (+ hộp NBN qua ổ chia nếu muốn giữ Internet khi mất điện).
+  Ổ riêng "Surge" ở dưới: **không** dùng cho thiết bị cần chạy khi mất điện.
 - Cáp USB của UPS → **homeserver**.
-- Trong UGOS: nếu có mục UPS mạng / NUT client → trỏ về `192.168.0.88` (xem 2.4). Nếu không, đặt NAS tự tắt khi mất điện quá 10 phút làm lớp dự phòng.
+- **BIOS server** (Lenovo M700 Tiny): *Power → After Power Loss* = **Power On**. UGOS: *Auto power-on when power is supplied* — đã bật.
+- Thử nhanh: rút điện tường của UPS 1–2 phút × 3 lần → server, NAS, Deco **không** tắt/khởi động lại.
+  (NAS nguồn gắn trong mà bị tắt → sóng sin mô phỏng không hợp → trả hàng trong hạn đổi trả.)
 
-**2.2 🤖 Cài NUT:**
+**2.2 👤 Cài NUT** (lệnh cần sudo — chủ nhà chạy):
 
 ```bash
+cd ~/projects/heomoi-homelab && git pull && sudo ./homelab/install.sh
 sudo apt install -y nut
-sudo nut-scanner -U                     # xác nhận driver (thường usbhid-ups)
-sudo cp homelab/nut/{nut.conf,ups.conf,upsd.conf,upsd.users,upsmon.conf} /etc/nut/
-P=$(openssl rand -hex 16)
-sudo sed -i "s/CHANGE_ME_LOCAL/$P/" /etc/nut/upsd.users /etc/nut/upsmon.conf
-sudo chown root:nut /etc/nut/upsd.users /etc/nut/upsmon.conf && sudo chmod 640 /etc/nut/upsd.users /etc/nut/upsmon.conf
-# File Telegram riêng cho NOTIFYCMD (chạy bằng user nut):
+sudo nut-scanner -U                                   # phải thấy usbhid-ups, vendorid 0764
+sudo cp homelab/nut/{nut.conf,ups.conf,upsd.conf,upsd.users,upsmon.conf,upssched.conf} /etc/nut/
+L=$(openssl rand -hex 16); N=$(openssl rand -hex 12)
+sudo sed -i "s/CHANGE_ME_LOCAL/$L/" /etc/nut/upsd.users /etc/nut/upsmon.conf
+sudo sed -i "s/CHANGE_ME_NAS/$N/" /etc/nut/upsd.users; unset L N
+sudo chown root:nut /etc/nut/*.conf /etc/nut/upsd.users && sudo chmod 640 /etc/nut/*.conf /etc/nut/upsd.users
+# Telegram cho upssched (user nut) — bot cảnh báo, chép từ secrets.env, không in ra:
 sudo sh -c 'grep -E "^TELEGRAM_(BOT_TOKEN|CHAT_ID)=" /etc/homelab/secrets.env > /etc/homelab/telegram.env'
-sudo chown root:nut /etc/homelab/telegram.env && sudo chmod 640 /etc/homelab/telegram.env
-sudo chmod 711 /etc/homelab
-sudo systemctl restart nut-driver.target nut-server nut-monitor 2>/dev/null || sudo systemctl restart nut-driver nut-server nut-monitor
-upsc ups@localhost                      # phải thấy battery.charge, ups.status = OL
+sudo chown root:nut /etc/homelab/telegram.env && sudo chmod 640 /etc/homelab/telegram.env && sudo chmod 711 /etc/homelab
+sudo systemctl restart nut-driver.target nut-server nut-monitor
+sudo systemctl enable --now homelab-ups-fsd.path
+upsc ups@localhost | grep -E 'ups.status|battery.charge|battery.runtime|ups.load|ups.model'   # ups.status = OL
 ```
 
-Nếu UPS không chấp nhận `override.battery.charge.low`, bỏ 3 dòng `ignorelb/override.*` trong `ups.conf`.
+**2.3 👤 NAS làm NUT secondary (UGOS → Control Panel → Hardware & Power → tab UPS):**
+- Bật UPS → chọn **UPS mạng / Network UPS (NUT)** → máy chủ `192.168.0.88`, user `monuser`,
+  mật khẩu xem bằng `sudo grep -A1 '\[monuser\]' /etc/nut/upsd.users` (đọc trên màn hình, không gửi vào chat).
+- Hành động khi UPS báo tắt: **tắt NAS** (hoặc "Safe mode/Shut down").
+- UGOS chỉ cho tên/mật khẩu cố định → sửa `[monuser]` trong `/etc/nut/upsd.users` cho khớp, `sudo systemctl restart nut-server`.
+- UGOS không có NUT client → NAS chỉ còn tự bật lại sau mất điện; ghi chú lại, server vẫn tắt an toàn.
 
-**2.3 🤖 Chạy thử thứ tự tắt (KHÔNG tắt thật):**
+**2.4 🤖 Kiểm tra không tắt thật:**
 
 ```bash
-sudo /opt/homelab/bin/nut-shutdown.sh --dry-run
+sudo /opt/homelab/bin/homelab-ops.sh ups-status
+sudo /opt/homelab/bin/homelab-ops.sh ups-dry-run       # in đủ 4 bước, không làm gì
+sudo -u nut /opt/homelab/bin/nut-upssched-cmd.sh notify_online   # phải nhận Telegram từ bot cảnh báo
+upsc -c ups@localhost                                  # thấy 2 client: localhost và 192.168.1.123 (NAS)
 ```
 
-Kết quả phải liệt kê: dừng container → gỡ mount → lệnh tắt NAS (báo `sudo shutdown: OK`) → tắt server.
+⛔ **CỔNG 2a — 👤 thử mất điện ngắn:** rút điện UPS 1 phút → Telegram "⚡ Mất điện", cắm lại → "✅ Có điện lại". Không gì tắt.
 
-**2.4 (Tuỳ chọn) NAS tự theo dõi UPS qua mạng:** đổi `MODE=netserver`, bỏ comment `LISTEN 192.168.0.88` và user `[monuser]`
-(mật khẩu riêng), khởi động lại `nut-server`, rồi nhập thông tin vào UGOS.
+⛔ **CỔNG 2b — 👤 thử thật toàn bộ** (buổi tối rảnh, báo cả nhà mất Internet/Immich ~10 phút):
+rút điện UPS và **để rút**: sau 3 phút → container dừng, NFS gỡ → NAS tắt → server tắt → ~60 s sau UPS cắt ổ cắm.
+Cắm điện lại → ~2 phút sau ổ cắm có điện → NAS + server tự lên → kiểm `cutover.sh status`, `docker ps`, Immich, camera.
+Không qua 2b thì chưa tin được UPS. Không lên lại sau khi có điện → kiểm BIOS "After Power Loss" và `offdelay/ondelay`.
 
-⛔ **CỔNG 2 — 👤 thử thật:** vào lúc rảnh, rút điện UPS khỏi ổ cắm 1–2 phút → phải nhận Telegram "ONBATT", cắm lại → "ONLINE".
-(Không cần để cạn pin; thứ tự tắt đã kiểm ở 2.3.)
+**Gỡ bỏ:** `sudo systemctl disable --now homelab-ups-fsd.path nut-monitor` (server vẫn chạy bình thường, chỉ mất tự tắt).
 
 ---
 

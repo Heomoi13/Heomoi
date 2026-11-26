@@ -1,0 +1,9 @@
+[Unit]
+Description=Homelab: chờ yêu cầu tắt máy từ UPS (upssched, user nut)
+
+[Path]
+PathExists=/run/nut/homelab-fsd-request
+Unit=homelab-ups-fsd.service
+
+[Install]
+WantedBy=multi-user.target

@@ -55,6 +55,19 @@ case $cmd in
       journalctl -u "homelab-$arg.service" -n 80 --no-pager ;;
     *) die "logs seed|backup-local|backup-mac|maintain|monitor-storage|nas-health|restore-drill" ;; esac ;;
   timers) systemctl list-timers 'homelab-*' --all --no-pager ;;
+  ports)
+    # Chỉ đọc. Không in biến môi trường hay cấu hình của dịch vụ.
+    echo "== Cổng đang nghe: giao thức | địa chỉ:cổng | tiến trình"
+    ss -tulpnH | awk '{print $1, $5, $7}' | sed -E 's/users:\(\("([^"]+)".*/\1/' | sort -k2 -u
+    echo "== Container publish cổng ra host"
+    docker ps --format '{{.Names}}\t{{.Ports}}' | awk -F'\t' '$2 ~ /->/'
+    echo "== Container network_mode host (mọi cổng của nó nằm thẳng trên host)"
+    docker ps -q | xargs -r docker inspect -f '{{.Name}} {{.HostConfig.NetworkMode}}' | awk '$2=="host"{print substr($1,2)}'
+    echo "== UFW"
+    ufw status verbose 2>/dev/null || echo "(không có ufw)"
+    echo "== iptables DOCKER-USER (cổng Docker publish đi vòng qua UFW)"
+    iptables -S DOCKER-USER 2>/dev/null || echo "(không có chain DOCKER-USER)"
+    ;;
   *)
     cat <<'EOF'
 Dùng: sudo /opt/homelab/bin/homelab-ops.sh <lệnh>
@@ -65,7 +78,7 @@ Dùng: sudo /opt/homelab/bin/homelab-ops.sh <lệnh>
   monitor storage|nas-health
   ups-status | ups-dry-run
   logs <seed|backup-local|backup-mac|maintain|monitor-storage|nas-health|restore-drill>
-  timers
+  timers | ports
 EOF
     ;;
 esac

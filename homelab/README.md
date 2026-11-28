@@ -662,3 +662,72 @@ Lấy ngẫu nhiên 20 file từ snapshot mới nhất so SHA-256 với file đa
 chạy `sudo mount /srv/nas && docker restart immich_server` (và các container dùng `/srv/nas`).
 
 👤 Trong BIOS server và cài đặt nguồn UGOS: bật **tự khởi động lại khi có điện trở lại** (AC power recovery / Restore on AC power loss).
+
+---
+
+## 9. Bảo mật và giám sát — hiện trạng sau rà soát 28/11/2026
+
+Mốc đối chiếu cho lần rà sau. Rà lại **mỗi quý** hoặc **mỗi khi thêm dịch vụ mới**: `sudo /opt/homelab/bin/homelab-ops.sh ports`, so với bảng 9.3.
+
+### 9.1 Mô hình đe doạ
+
+- Từ Internet **không vào được**: Deco không port-forward, UPnP tắt.
+- Rủi ro thật nằm **trong nhà**: camera và thiết bị IoT dùng chung LAN với server, thiết bị của khách, và các máy trong tailnet.
+- Vì vậy nguyên tắc là: **mọi dịch vụ nghe ngoài 127.0.0.1 phải có đăng nhập**, trừ khi giao thức không có (DNS, mDNS, Matter) hoặc đã ghi ở 9.4.
+- **UFW đang tắt và hoãn đến phase C** (tách mạng IoT, xem `home-devices/README.md`). Bật UFW chung với Docker, HomeKit (mDNS) và Matter (UDP ngẫu nhiên) dễ làm hỏng dịch vụ. Lưu ý: cổng Docker publish đi vòng qua UFW. Nếu sau này bật UFW thì phải thêm luật vào chain `DOCKER-USER`.
+
+### 9.2 Đã áp dụng
+
+| Hạng mục | Cấu hình | Ghi chú vận hành |
+|---|---|---|
+| **SSH** | `/etc/ssh/sshd_config.d/10-hardening.conf`: `PasswordAuthentication no`, `KbdInteractiveAuthentication no`, `PermitRootLogin no`. File này đọc trước `50-cloud-init.conf` nên thắng | Thêm thiết bị mới: tạo key ED25519 trên thiết bị → từ một máy đang vào được, dán public key vào `~/.ssh/authorized_keys`. Gỡ: xoá file rồi `systemctl reload ssh`. Bàn phím và màn hình cắm trực tiếp vẫn đăng nhập bằng mật khẩu |
+| **Dozzle :8082** | `DOZZLE_AUTH_PROVIDER=simple` với `dozzle-data/users.yml` (bcrypt, 600). Đọc Docker qua `DOCKER_HOST=tcp://dockerproxy:2375`, không mount `docker.sock` | Proxy `dockerproxy` chỉ đọc: `CONTAINERS=1`, `INFO=1`, `POST=0`. Đổi mật khẩu: tạo lại `users.yml` bằng `htpasswd -niBC 12` qua stdin. Hermes không đọc `dozzle-data/` |
+| **Homepage → Beszel** | Bỏ widget Beszel. Ô Beszel chỉ là liên kết kèm `siteMonitor` `/api/health` | Widget Beszel của Homepage (version 2) bắt buộc dùng tài khoản **superuser** PocketBase, nên không cấp. CPU/RAM/ổ đĩa đã có ở thanh tài nguyên của Homepage |
+| **Uptime Kuma** (Pi VN `100.105.36.109:3001`) | Admin `namdo`, **bật 2FA**. **Không lưu tài khoản Kuma trên server** (`~/.config/kuma.env` chỉ có `KUMA_PUSH_TOKEN`) | Mọi thay đổi Kuma do chủ nhà làm qua UI. Monitor mới phải được thêm vào Status Page **Home Lab** (slug `homelab`), vì widget Homepage chỉ đếm monitor trong trang đó. Tailscale SSH vào Pi ở chế độ *check*: phải xác nhận qua `login.tailscale.com` |
+| **Healthchecks** (healthchecks.io) | 10 check, tz Australia/Melbourne. Link ping ở `~/.config/healthchecks-pings.env` (600), key API ở `~/.config/healthchecks.env` (600), Homepage dùng key **read-only** | Gắn job: `~/scripts/hc_run.sh HC_PING_<TÊN> -- <lệnh>`. `hc_run.sh` gửi `/start`, không export link ping sang job con, và URL không xuất hiện trong `ps`. Job theo dõi chỉ báo **liveness** (fail khi crash hoặc Traceback), riêng `secret-scan-weekly` fail khi có phát hiện |
+| **Git và quét bí mật** | Hook pre-commit/post-commit quét bí mật (fail-closed) và **chặn file > 5 MB** ở `~/scripts`, `~/.hermes/scripts`, `~/.hermes/skills`, `~/projects/heomoi-homelab`. Quét toàn bộ hằng tuần (CN 09:00) | Cấm `--no-verify`. Báo nhầm thì **sửa nội dung** (ví dụ ghép chuỗi trong test), **không** thêm allowlist hay nới luật. `~/.hermes/skills` là repo chỉ local |
+| **Bản clone repo này trên server** | `~/projects/heomoi-homelab`: cập nhật bằng `git pull` (merge, `pull.rebase=false`). Server **không có và không được có** quyền push GitHub | Tài liệu thực hiện của Hermes ở `home-devices/EXECUTION-LOG.md`. Nhánh `hermes-backup-20261128` giữ 12 commit cũ. `compose/.env` không track |
+
+**Phân vai giám sát:**
+- **Kuma** trả lời câu hỏi "dịch vụ có đang sống không", nhìn từ ngoài nhà (Pi VN).
+- **Healthchecks** trả lời câu hỏi "job định kỳ có chạy đến cuối không".
+- **Beszel** hiện tài nguyên máy.
+- **Telegram (bot cảnh báo)** là kênh báo chung. Job theo dõi tự báo vấn đề qua Telegram, nên Healthchecks không báo trùng.
+
+### 9.3 Bảng cổng (28/11/2026)
+
+| Cổng | Dịch vụ | Nghe ở | Đăng nhập | Quyết định |
+|---|---|---|---|---|
+| 22/tcp | sshd | mọi interface | chỉ key | Giữ |
+| 53 | Pi-hole DNS | mọi interface | — (DNS) | Giữ |
+| 80, 443/tcp | Pi-hole admin | mọi interface | có | Giữ |
+| 111, statd (cổng động) | rpcbind / rpc.statd | mọi interface | — | **Giữ**: NFSv3 của `/srv/nas` cần để khoá file |
+| 445/tcp | Samba | mọi interface | có | Giữ |
+| 1400/tcp, 1900/udp | Home Assistant (Sonos event, SSDP) | LAN | — | **Giữ**: Sonos trong HA cần |
+| 2283/tcp | Immich | mọi interface | có | Giữ |
+| 3000/tcp | Homepage | LAN + Tailscale | **không** | Chấp nhận (9.4) |
+| 5353/udp, UDP cao | HA / matter-server (mDNS, Matter) | mọi interface | — | Giữ |
+| 8081/tcp | finance-dashboard | mọi interface | basic auth (HTTP) | Giữ, có thể chuyển sang chỉ Tailscale |
+| 8082/tcp | Dozzle | LAN + Tailscale | **có** (từ 28/11) | Giữ |
+| 8083/tcp | calibre-web | mọi interface | mật khẩu mặc định | Chấp nhận (9.4) |
+| 8090/tcp | Beszel hub | LAN + Tailscale | có | Giữ |
+| 8123/tcp | Home Assistant | mọi interface | có | Giữ (HomeKit và app cần LAN) |
+| 8384/tcp | Syncthing GUI | mọi interface | có | Giữ, có thể chuyển sang chỉ Tailscale |
+| 8555/udp, 18555/tcp | WebRTC (go2rtc / go2rtc trong HA) | LAN + Tailscale | — | Giữ: chỉ là cổng media, signaling qua API có đăng nhập hoặc chỉ nghe localhost |
+| 13378/tcp | audiobookshelf | mọi interface | có | Giữ |
+| 21027, 22000 | Syncthing (giao thức) | mọi interface | device ID | Giữ |
+| 21064–21074/tcp | HomeKit (HA) | mọi interface | pair HAP | Giữ |
+| 45876/tcp | beszel-agent | mọi interface | khoá hub | Giữ |
+| 1984, 8554, 18554/tcp | go2rtc API/RTSP | 127.0.0.1 | — | Giữ |
+| 5432–5434/tcp | Postgres ×3 | 127.0.0.1 | có | Giữ |
+| 5580/tcp | matter-server | 127.0.0.1 | — | Giữ |
+| 8080/tcp | ffp_api | 127.0.0.1 | — | Giữ (đang lỗi 500, việc riêng) |
+
+### 9.4 Rủi ro đã chấp nhận hoặc hoãn
+
+| Mục | Rủi ro | Quyết định |
+|---|---|---|
+| calibre-web :8083 mật khẩu admin mặc định | Thiết bị trong LAN đăng nhập admin được. Phạm vi chỉ là thư viện sách | Chủ nhà chấp nhận 28/11. Lần rà sau chỉ ghi "đã chấp nhận" |
+| Homepage :3000 không đăng nhập | Lộ danh sách dịch vụ và số liệu. Key API dùng phía server, không xuống trình duyệt | Chấp nhận |
+| UFW tắt | Mọi cổng ở 9.3 vào được từ LAN | Hoãn đến phase C (tách mạng IoT) |
+| finance :8081 basic auth qua HTTP | Mật khẩu đi dạng rõ trong LAN | Cân nhắc chuyển sang chỉ Tailscale |

@@ -1,0 +1,11 @@
+[Unit]
+Description=Homelab: restic vào ổ HDD 3TB
+Wants=network-online.target
+After=network-online.target remote-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/homelab/bin/restic-backup.sh local
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=infinity

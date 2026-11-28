@@ -1,0 +1,11 @@
+# /etc/nut/upsd.users — quyền 640, owner root:nut. Hai mật khẩu được thay bằng chuỗi ngẫu nhiên khi cài (README 2.2).
+# upsmon_local: chính server (primary — được phát lệnh tắt FSD).
+[upsmon_local]
+  password = CHANGE_ME_LOCAL
+  upsmon primary
+
+# monuser: NAS UGOS (secondary — chỉ nhận lệnh, không ra lệnh được).
+# Nếu UGOS bắt buộc tên/mật khẩu cố định thì đổi 2 dòng dưới cho khớp UGOS.
+[monuser]
+  password = CHANGE_ME_NAS
+  upsmon secondary

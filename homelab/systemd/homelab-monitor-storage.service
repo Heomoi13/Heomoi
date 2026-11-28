@@ -1,0 +1,11 @@
+[Unit]
+Description=Homelab: giám sát mount và dung lượng
+Wants=network-online.target
+After=network-online.target remote-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/homelab/bin/monitor.sh storage
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=infinity

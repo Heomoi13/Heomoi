@@ -1,0 +1,10 @@
+[Unit]
+Description=Homelab: restic Mac M2 hằng đêm 04:00
+
+[Timer]
+OnCalendar=*-*-* 04:00:00
+Persistent=true
+RandomizedDelaySec=0
+
+[Install]
+WantedBy=timers.target

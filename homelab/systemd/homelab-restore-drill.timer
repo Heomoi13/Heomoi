@@ -1,0 +1,10 @@
+[Unit]
+Description=Homelab: diễn tập khôi phục mỗi quý
+
+[Timer]
+OnCalendar=*-01,04,07,10-15 10:00:00
+Persistent=true
+RandomizedDelaySec=0
+
+[Install]
+WantedBy=timers.target

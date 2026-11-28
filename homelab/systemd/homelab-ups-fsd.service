@@ -1,0 +1,8 @@
+[Unit]
+Description=Homelab: mất điện kéo dài — dừng container, gỡ NFS, gửi FSD (NAS tắt trước, server sau)
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/rm -f /run/nut/homelab-fsd-request
+ExecStart=/opt/homelab/bin/nut-shutdown.sh fsd
+TimeoutStartSec=600

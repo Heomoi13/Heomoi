@@ -1,0 +1,10 @@
+[Unit]
+Description=Homelab: bảo trì restic CN 06:00
+
+[Timer]
+OnCalendar=Sun *-*-* 06:00:00
+Persistent=true
+RandomizedDelaySec=0
+
+[Install]
+WantedBy=timers.target

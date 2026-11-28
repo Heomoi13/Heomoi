@@ -1,0 +1,28 @@
+# Home Assistant + Matter server — đặt tại ~/homeassistant/docker-compose.yml
+# network_mode: host là bắt buộc: HomeKit Bridge và Matter cần mDNS/multicast cùng mạng với HomePod/Apple TV.
+# GHIM phiên bản: thay <HA_VERSION> bằng bản stable mới nhất đã kiểm (vd. 2026.11.2), không dùng :latest.
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:<HA_VERSION>
+    container_name: homeassistant
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      TZ: Australia/Sydney
+    volumes:
+      - /home/namdo/homeassistant/config:/config
+      - /etc/localtime:/etc/localtime:ro
+      - /run/dbus:/run/dbus:ro          # Bluetooth (TP-Link UB500) — bỏ dòng này nếu không dùng
+    depends_on:
+      - matter-server
+
+  matter-server:
+    image: ghcr.io/home-assistant-libs/python-matter-server:<MATTER_VERSION>
+    container_name: matter-server
+    network_mode: host
+    restart: unless-stopped
+    security_opt:
+      - apparmor:unconfined             # cần cho Bluetooth commissioning
+    volumes:
+      - /home/namdo/homeassistant/matter:/data
+      - /run/dbus:/run/dbus:ro

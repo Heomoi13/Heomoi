@@ -1,0 +1,7 @@
+/lost+found
+/.nas-homelab-sentinel
+[#]snapshot
+.snapshot
+@eaDir
+[#]recycle
+.@__thumb

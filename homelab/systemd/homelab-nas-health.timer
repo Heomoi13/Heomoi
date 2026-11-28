@@ -1,0 +1,10 @@
+[Unit]
+Description=Homelab: kiểm tra NAS hằng ngày 08:10
+
+[Timer]
+OnCalendar=*-*-* 08:10:00
+Persistent=true
+RandomizedDelaySec=0
+
+[Install]
+WantedBy=timers.target

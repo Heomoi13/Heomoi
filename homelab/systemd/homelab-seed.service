@@ -1,0 +1,11 @@
+[Unit]
+Description=Homelab: sao lưu mồi /srv/nas lên NAS (giai đoạn 1)
+Wants=network-online.target
+After=network-online.target remote-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/homelab/bin/seed-to-nas.sh
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=infinity

@@ -1,0 +1,11 @@
+[Unit]
+Description=Homelab: bảo trì kho restic
+Wants=network-online.target
+After=network-online.target remote-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/homelab/bin/restic-maintain.sh
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=infinity
